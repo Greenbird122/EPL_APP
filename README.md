@@ -1,4 +1,4 @@
-6# REPAIR-AI
+# REPAIR-AI
 
 **Reproductive Early Pregnancy AI Response System** — Flutter app for Kenyan mothers: symptom reporting, explainable on-device triage (demo), and facility referral.
 
@@ -53,6 +53,3 @@ Active packages are minimal for the hackathon build. See [DEPENDENCIES.md](DEPEN
 
 Demo logic only — **not** a medical diagnosis. Always seek professional care when concerned.
 
-## Screenshots
-
-Add 2–3 screenshots to this folder for judges: `docs/screenshots/` (onboarding, triage result, referral).
