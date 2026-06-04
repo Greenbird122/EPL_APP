@@ -26,8 +26,8 @@ class HeroImageStack extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = accentColor ?? AppTheme.primary;
-    final scrimEnd = isDark ? 0.92 : 0.85;
-    final blurSigma = isDark ? 18.0 : 14.0;
+    final scrimEnd = isDark ? 0.78 : 0.58;
+    final blurSigma = isDark ? 10.0 : 6.0;
 
     return Stack(
       fit: StackFit.expand,
@@ -46,7 +46,7 @@ class HeroImageStack extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withValues(alpha: isDark ? 0.35 : 0.2),
+                Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
                 accent.withValues(alpha: scrimEnd),
               ],
             ),
@@ -92,8 +92,8 @@ class _ForegroundCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 24,
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 18,
               offset: const Offset(0, 8),
             ),
           ],

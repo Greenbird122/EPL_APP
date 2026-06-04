@@ -34,9 +34,10 @@ abstract class AppLocalizations {
     // During early startup (e.g. hot restart), delegates might not be
     // resolved yet. Fall back to English rather than crashing.
     return loc ??
-        (localeFromContext(context) == 'sw'
-            ? (sw.AppLocalizationsSw('sw'))
-            : (en.AppLocalizationsEn('en')));
+        switch (localeFromContext(context)) {
+          'sw' => sw.AppLocalizationsSw('sw'),
+          _ => en.AppLocalizationsEn('en'),
+        };
   }
 
   static String localeFromContext(BuildContext context) {
@@ -292,4 +293,124 @@ abstract class AppLocalizations {
 
   String get whatsAppMessage;
   String get nearestFacilitySubtitle;
+
+  String get chooseAccessSubtitle;
+  String get continueAsGuest;
+  String get continueWithPhoneOtp;
+  String get fastSignInSubtitle;
+  String get createAccountTitle;
+  String get createAccountSubtitle;
+  String get providerAccess;
+  String get signInTitle;
+  String get signInSubtitle;
+  String get providerSignInTitle;
+  String get providerSignInSubtitle;
+  String get staffIdOrEmail;
+  String get staffIdRequired;
+  String get continueToChpDashboard;
+  String get chpAccessHint;
+  String get phoneOtpLabel;
+  String get emailLabel;
+  String get phoneNumberLabel;
+  String get sendOtp;
+  String get useGuestAccessInstead;
+  String get newToRepairCreateAccount;
+  String get createAccountIntro;
+  String get careAreaLabel;
+  String get consentText;
+  String get continueToPhoneVerification;
+  String get alreadyHaveAccountSignIn;
+  String get otpCodeLabel;
+  String get verifyAndContinue;
+  String get resendOtp;
+  String get recoverAccountTitle;
+  String get recoverAccountSubtitle;
+  String get recoveryInstructions;
+  String get sendRecoveryInstructions;
+  String get backToSignIn;
+  String get useUssdTitle;
+  String get useUssdSubtitle;
+  String get copyUssdCode;
+  String get dialUssd;
+  String get ussdCopied;
+
+  String get homeSupportChannelsSuffix;
+  String get todayCareTitle;
+  String get todayCareSavedTitle;
+  String get todayCareEmptyTitle;
+  String get pregnancyWeek;
+  String get noCheckYet;
+  String get followReferral;
+  String get getHelp;
+  String get checkCare;
+  String get useUssd;
+  String get todayCareEmptyMessage;
+  String get todayCareReachedMessage;
+  String get todayCareNeedsHelpMessage;
+  String get todayCareCompletedMessage;
+  String get todayCareDefaultMessage;
+  String get referralDraft;
+  String get careFound;
+  String get accepted;
+  String get completed;
+  String get cancelled;
+  String get careTimelineTitle;
+  String get careTimelineEmptyMessage;
+  String get careTimelineSavedMessage;
+  String get noCareStepsYet;
+  String get startWithSymptomCheck;
+  String get symptomCheckSaved;
+  String get facilityReadyFindCare;
+  String get referralDrafted;
+  String get facilityRecommended;
+  String get referralSentStatus;
+  String get facilityAccepted;
+  String get careCompleted;
+  String get referralCancelled;
+  String get reachedCare;
+  String get careNotReachedYet;
+  String get helpRequested;
+  String get journeyMarkedFollowedUp;
+  String get keepReferralClose;
+  String get supportChannelsReady;
+  String get didYouReachCare;
+  String get yesReachedCare;
+  String get notYet;
+  String get needHelp;
+  String get reached;
+  String get pending;
+  String get needsHelp;
+  String get followUpReachedMessage;
+  String get followUpNotYetMessage;
+  String get followUpNeedsHelpMessage;
+  String get followUpUnknownMessage;
+  String get careSupportTitle;
+  String get careSupportSubtitle;
+  String get emergency;
+  String get transport;
+  String get findCareTitle;
+  String get openFacilityDirections;
+  String get transportRequestQueued;
+  String get referralAlreadyCompleted;
+  String get referralStatusUpdated;
+  String get markAccepted;
+  String get markCompleted;
+  String get restartReferral;
+  String get viewReportsTimeline;
+  String get chpWorkspaceTitle;
+  String get chpWorkspaceSubtitle;
+  String get activeCases;
+  String get highPriority;
+  String get pendingFollowUps;
+  String get caseQueue;
+  String get allCases;
+  String get noCasesMatchFilter;
+  String get callMother;
+  String get message;
+  String get markContacted;
+  String get contacted;
+  String get assignedArea;
+  String get lastUpdate;
+  String get today;
+  String get yesterday;
 }

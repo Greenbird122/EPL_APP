@@ -28,7 +28,8 @@ class TrustChipsRow extends StatelessWidget {
               Uri.parse('https://repairai.co.ke/'),
               mode: LaunchMode.externalApplication,
             ),
-            backgroundColor: AppTheme.primary.withValues(alpha: isDark ? 0.25 : 0.12),
+            backgroundColor:
+                AppTheme.primary.withValues(alpha: isDark ? 0.25 : 0.12),
             labelStyle: TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.w600,

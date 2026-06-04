@@ -29,6 +29,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
@@ -40,16 +41,17 @@ flutter:
     - assets/icons/
     - assets/animations/
     - assets/svgs/
-    - lib/localization/languages/
 
   fonts:
-    - family: Poppins
+    - family: Inter
       fonts:
-        - asset: assets/fonts/Poppins-Regular.ttf
-        - asset: assets/fonts/Poppins-Medium.ttf
+        - asset: assets/fonts/Inter-Variable.ttf
+        - asset: assets/fonts/Inter-Variable.ttf
           weight: 500
-        - asset: assets/fonts/Poppins-SemiBold.ttf
+        - asset: assets/fonts/Inter-Variable.ttf
           weight: 600
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 700
 
 flutter_native_splash:
   color: "#6B4EFF"
@@ -57,3 +59,11 @@ flutter_native_splash:
   android_12:
     image: assets/illustrations/splash_logo.png
     color: "#6B4EFF"
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/icons/repair_ai_icon.png
+  adaptive_icon_background: "#6B4EFF"
+  adaptive_icon_foreground: assets/icons/repair_ai_icon_foreground.png

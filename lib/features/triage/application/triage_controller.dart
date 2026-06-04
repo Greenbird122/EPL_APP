@@ -34,6 +34,5 @@ class TriageController {
     _ref.read(triageResultProvider.notifier).state = null;
   }
 
-  SymptomReportDraft? get currentDraft =>
-      _ref.read(symptomReportDraftProvider);
+  SymptomReportDraft? get currentDraft => _ref.read(symptomReportDraftProvider);
 }

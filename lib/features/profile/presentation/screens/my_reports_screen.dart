@@ -32,7 +32,7 @@ class MyReportsScreen extends ConsumerWidget {
     return parsed != null ? l10n.riskLabel(parsed) : stored;
   }
 
-  void _showDetail(BuildContext context, SymptomReport report) {
+  void _showDetail(BuildContext context, WidgetRef ref, SymptomReport report) {
     final l10n = AppLocalizations.of(context);
     showModalBottomSheet<void>(
       context: context,
@@ -110,6 +110,18 @@ class MyReportsScreen extends ConsumerWidget {
                 '${report.gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
                 style: TextStyle(color: Colors.grey[700]),
               ),
+              const SizedBox(height: 6),
+              Text(
+                '${_labelFor(report.severity)} • ${_labelFor(report.duration)}',
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+              if (report.notes.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  report.notes,
+                  style: const TextStyle(height: 1.4),
+                ),
+              ],
               const SizedBox(height: 16),
               Text(
                 l10n.recommendation,
@@ -127,6 +139,36 @@ class MyReportsScreen extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: 8),
+              RepairOutlinedButton(
+                label: 'Export / share report',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Report export queued.'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () async {
+                  await ref
+                      .read(reportHistoryProvider.notifier)
+                      .deleteReport(report.id);
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Report deleted.')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.delete_outline, color: AppTheme.error),
+                label: const Text(
+                  'Delete report',
+                  style: TextStyle(color: AppTheme.error),
+                ),
+              ),
+              const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(l10n.close),
@@ -136,6 +178,25 @@ class MyReportsScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  String _labelFor(String value) {
+    switch (value) {
+      case 'mild':
+        return 'Mild';
+      case 'moderate':
+        return 'Moderate';
+      case 'severe':
+        return 'Severe';
+      case 'today':
+        return 'Started today';
+      case 'two_days':
+        return '1-2 days';
+      case 'three_plus':
+        return '3+ days';
+      default:
+        return value;
+    }
   }
 
   @override
@@ -156,6 +217,7 @@ class MyReportsScreen extends ConsumerWidget {
               icon: Icons.description_outlined,
               title: l10n.noReportsYet,
               message: l10n.reportSymptomsSubtitle,
+              imageAsset: 'assets/illustrations/mother_2.jpg',
               actionLabel: l10n.reportSymptoms,
               onAction: () => context.push('/triage/symptom-report'),
             )
@@ -190,7 +252,7 @@ class MyReportsScreen extends ConsumerWidget {
                       '${_riskLabel(l10n, report.riskLevel)}',
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _showDetail(context, report),
+                    onTap: () => _showDetail(context, ref, report),
                   ),
                 );
               },

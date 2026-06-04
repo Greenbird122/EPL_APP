@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/utils/launch_helpers.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
+import 'package:repair_ai/features/care_journey/presentation/controllers/care_journey_provider.dart';
+import 'package:repair_ai/features/care_journey/presentation/widgets/care_support_block.dart';
+import 'package:repair_ai/features/care_journey/presentation/widgets/care_timeline.dart';
+import 'package:repair_ai/features/care_journey/presentation/widgets/today_care_card.dart';
+import 'package:repair_ai/features/referral/presentation/controllers/referral_state_provider.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
-import 'package:repair_ai/localization/triage_l10n.dart';
 import 'package:repair_ai/shared/widgets/bottom_nav.dart';
 import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/hero_image_stack.dart';
+import 'package:repair_ai/shared/widgets/image_accent_card.dart';
 import 'package:repair_ai/shared/widgets/language_toggle.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
-import 'package:repair_ai/shared/widgets/repair_card.dart';
 import 'package:repair_ai/shared/widgets/theme_mode_toggle.dart';
+import 'package:repair_ai/shared/widgets/ussd_access_card.dart';
 import 'package:repair_ai/shared/widgets/whatsapp_support_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -22,6 +28,8 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final reports = ref.watch(reportHistoryProvider);
     final lastReport = reports.isNotEmpty ? reports.last : null;
+    final referral = ref.watch(referralStateProvider);
+    final followUpStatus = ref.watch(careJourneyProvider);
 
     return Scaffold(
       appBar: RepairAppBar(
@@ -41,7 +49,7 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             HomeHeroBanner(
-              imageAsset: 'assets/illustrations/pregnant_mother.jpg',
+              imageAsset: 'assets/illustrations/mother_2.jpg',
               topChild: Chip(
                 avatar: const Icon(
                   Icons.cloud_off,
@@ -67,7 +75,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    l10n.reportSymptomsEarly,
+                    '${l10n.reportSymptomsEarly} ${l10n.homeSupportChannelsSuffix}',
                     style: const TextStyle(
                       fontSize: 15,
                       color: Colors.white70,
@@ -80,39 +88,30 @@ class HomeScreen extends ConsumerWidget {
               padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: DemoDisclaimerBanner(compact: true),
             ),
-            if (lastReport != null) ...[
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: RepairCard(
-                  onTap: () => context.push('/history'),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          AppTheme.primary.withValues(alpha: 0.15),
-                      child:
-                          const Icon(Icons.history, color: AppTheme.primary),
-                    ),
-                    title: Text(
-                      l10n.lastReport,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      () {
-                        final stored = l10n.riskFromStored(lastReport.riskLevel);
-                        return stored != null
-                            ? l10n.riskLabel(stored)
-                            : lastReport.riskLevel;
-                      }(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TodayCareCard(
+                latestReport: lastReport,
+                referral: referral,
+                followUpStatus: followUpStatus,
+                onPrimaryAction: () => lastReport == null
+                    ? context.push('/triage/symptom-report')
+                    : context.push('/referral'),
+                onSecondaryAction: () => lastReport == null
+                    ? launchUssdCode()
+                    : context.push('/history'),
               ),
-            ],
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CareTimeline(
+                latestReport: lastReport,
+                referral: referral,
+                followUpStatus: followUpStatus,
+              ),
+            ),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -153,6 +152,16 @@ class HomeScreen extends ConsumerWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: WhatsAppSupportCard(),
+            ),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: UssdAccessCard(),
+            ),
+            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: CareSupportBlock(compact: true),
             ),
             const SizedBox(height: 16),
             Padding(
@@ -197,53 +206,50 @@ class _ReportSymptomsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.primary,
-      borderRadius: BorderRadius.circular(20),
-      elevation: 6,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
-            ],
+    return ImageAccentCard(
+      imageAsset: 'assets/illustrations/pregnant_mother.jpg',
+      accentColor: AppTheme.primary,
+      onTap: onTap,
+      imageWidth: 104,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: AppTheme.primary,
+              size: 28,
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.arrow_forward_ios, size: 16),
+        ],
       ),
     );
   }
@@ -266,7 +272,12 @@ class _HomeActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepairCard(
+    return ImageAccentCard(
+      imageAsset: icon == Icons.history
+          ? 'assets/illustrations/mother_2.jpg'
+          : 'assets/illustrations/hospital.jpg',
+      accentColor: color,
+      imageWidth: 58,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,7 +321,12 @@ class _CompactNavCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepairCard(
+    return ImageAccentCard(
+      imageAsset: icon == Icons.psychology
+          ? 'assets/illustrations/mental_health.jpg'
+          : 'assets/illustrations/hospital.jpg',
+      accentColor: AppTheme.primary,
+      imageWidth: 72,
       onTap: onTap,
       child: ListTile(
         contentPadding: EdgeInsets.zero,

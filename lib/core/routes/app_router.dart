@@ -4,6 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/widgets/loading_error_state.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
+import 'package:repair_ai/features/auth/presentation/screens/auth_entry_screen.dart';
+import 'package:repair_ai/features/auth/presentation/screens/chp_sign_in_screen.dart';
+import 'package:repair_ai/features/auth/presentation/screens/create_account_screen.dart';
+import 'package:repair_ai/features/auth/presentation/screens/otp_screen.dart';
+import 'package:repair_ai/features/auth/presentation/screens/recover_account_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/login_transition_screen.dart';
 import 'package:repair_ai/features/onboarding/presentation/screens/how_it_works_screen.dart';
 import 'package:repair_ai/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -23,16 +28,40 @@ import '../../shared/widgets/quote_loading_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-bool _isPublicRoute(String path) {
+bool isPublicRoute(String path) {
   return path == '/splash' ||
       path == '/onboarding' ||
       path == '/how-it-works' ||
       path == '/login' ||
+      path == '/auth' ||
+      path == '/auth/sign-in' ||
+      path == '/auth/chp' ||
+      path == '/auth/create-account' ||
+      path == '/auth/otp' ||
+      path == '/auth/demo' ||
+      path == '/auth/recover' ||
       path == '/login/transition';
 }
 
+bool isProviderRoute(String path) {
+  return path == '/dashboard/provider';
+}
+
+bool isPatientRoute(String path) {
+  return path == '/' ||
+      path == '/triage/symptom-report' ||
+      path == '/triage/analyzing' ||
+      path == '/triage/risk-result' ||
+      path == '/referral' ||
+      path == '/profile' ||
+      path == '/profile/language' ||
+      path == '/history' ||
+      path == '/mental-health';
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final isLoggedIn = ref.watch(authSessionProvider);
+  final authSession = ref.watch(authSessionProvider);
+  final isLoggedIn = authSession.isLoggedIn;
   final onboardingDone = ref.watch(onboardingCompleteProvider);
   final authReady = ref.watch(authReadyProvider);
   final splashDone = ref.watch(splashMinimumDoneProvider);
@@ -48,17 +77,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (authReady && splashDone && path == '/splash') {
-        if (isLoggedIn) return '/';
-        if (onboardingDone) return '/login';
+        if (isLoggedIn) {
+          return authSession.isProvider ? '/dashboard/provider' : '/';
+        }
+        if (onboardingDone) return '/auth';
         return '/onboarding';
       }
 
-      if (!isLoggedIn && !_isPublicRoute(path)) {
-        return '/login';
+      if (!isLoggedIn && !isPublicRoute(path)) {
+        return '/auth';
       }
 
-      if (isLoggedIn && path == '/login') {
+      if (isLoggedIn && isProviderRoute(path) && !authSession.isProvider) {
         return '/';
+      }
+
+      if (isLoggedIn && (path == '/login' || path.startsWith('/auth'))) {
+        return authSession.isProvider ? '/dashboard/provider' : '/';
+      }
+
+      if (authSession.isProvider && isPatientRoute(path)) {
+        return '/dashboard/provider';
       }
 
       if (isLoggedIn && path == '/onboarding') {
@@ -83,6 +122,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/auth',
+        builder: (context, state) => const AuthEntryScreen(),
+      ),
+      GoRoute(
+        path: '/auth/sign-in',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/auth/chp',
+        builder: (context, state) => const ChpSignInScreen(),
+      ),
+      GoRoute(
+        path: '/auth/create-account',
+        builder: (context, state) => const CreateAccountScreen(),
+      ),
+      GoRoute(
+        path: '/auth/otp',
+        builder: (context, state) => const OtpScreen(),
+      ),
+      GoRoute(
+        path: '/auth/demo',
+        builder: (context, state) => const OtpScreen(isDemoMode: true),
+      ),
+      GoRoute(
+        path: '/auth/recover',
+        builder: (context, state) => const RecoverAccountScreen(),
       ),
       GoRoute(
         path: '/login/transition',

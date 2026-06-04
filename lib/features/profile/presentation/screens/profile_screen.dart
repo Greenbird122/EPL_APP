@@ -7,6 +7,7 @@ import 'package:repair_ai/shared/widgets/bottom_nav.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
 import 'package:repair_ai/shared/widgets/theme_mode_toggle.dart';
+import 'package:repair_ai/shared/widgets/ussd_access_card.dart';
 
 import '../../../auth/presentation/controllers/auth_session_provider.dart';
 import '../../../auth/presentation/controllers/login_profile_providers.dart';
@@ -86,9 +87,11 @@ class ProfileScreen extends ConsumerWidget {
               context,
               icon: Icons.help_outline,
               title: l10n.helpSupport,
-              subtitle: l10n.helpSupportSubtitle,
+              subtitle: '${l10n.helpSupportSubtitle} • USSD *384#',
               onTap: () => launchWhatsAppHelp(context),
             ),
+            const SizedBox(height: 4),
+            const UssdAccessCard(compact: true),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -99,7 +102,7 @@ class ProfileScreen extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.loggedOutSuccess)),
                     );
-                    context.go('/login');
+                    context.go('/auth');
                   }
                 },
                 icon: const Icon(Icons.logout, color: Colors.red),

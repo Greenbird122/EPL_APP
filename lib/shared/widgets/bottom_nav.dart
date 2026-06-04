@@ -40,7 +40,7 @@ class AppBottomNav extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.map_outlined),
-          label: l10n.myReferrals,
+          label: l10n.findCareTitle,
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.person),

@@ -10,6 +10,7 @@ class EmptyState extends StatelessWidget {
     required this.message,
     this.actionLabel,
     this.onAction,
+    this.imageAsset,
   });
 
   final IconData icon;
@@ -17,6 +18,7 @@ class EmptyState extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? imageAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,29 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 72, color: AppTheme.primary.withValues(alpha: 0.5)),
+            if (imageAsset != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: 168,
+                  height: 112,
+                  child: Image.asset(
+                    imageAsset!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(
+                      icon,
+                      size: 72,
+                      color: AppTheme.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Icon(
+                icon,
+                size: 72,
+                color: AppTheme.primary.withValues(alpha: 0.5),
+              ),
             const SizedBox(height: 16),
             Text(
               title,

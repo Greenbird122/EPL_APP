@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/language_providers.dart';
 
 class LanguageToggle extends ConsumerWidget {
@@ -9,61 +10,55 @@ class LanguageToggle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(languageProvider);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _LangChip(
-            label: 'EN',
-            selected: current == AppLanguage.en,
-            onTap: () =>
-                ref.read(languageProvider.notifier).setLanguage(AppLanguage.en),
-          ),
-          _LangChip(
-            label: 'SW',
-            selected: current == AppLanguage.sw,
-            onTap: () =>
-                ref.read(languageProvider.notifier).setLanguage(AppLanguage.sw),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LangChip extends StatelessWidget {
-  const _LangChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? Colors.white : Colors.transparent,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: selected ? const Color(0xFF6B4EFF) : Colors.white,
+    return PopupMenuButton<AppLanguage>(
+      tooltip: 'Language',
+      onSelected: (language) =>
+          ref.read(languageProvider.notifier).setLanguage(language),
+      itemBuilder: (context) => AppLanguage.values
+          .map(
+            (language) => PopupMenuItem(
+              value: language,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 32,
+                    child: Text(
+                      language.shortLabel,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(child: Text(language.displayName)),
+                  if (language == current)
+                    const Icon(Icons.check, color: AppTheme.primary),
+                ],
+              ),
             ),
-          ),
+          )
+          .toList(),
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.language, size: 16, color: Colors.white),
+            const SizedBox(width: 6),
+            Text(
+              current.shortLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(Icons.expand_more, size: 16, color: Colors.white),
+          ],
         ),
       ),
     );

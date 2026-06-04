@@ -71,9 +71,7 @@ class TriageRules {
       level = RiskLevel.high;
       urgencyHours = 0;
       recommendation = l10n.recHigh;
-    } else if (score >= 2 ||
-        set.contains(_bleeding) ||
-        set.contains(_fever)) {
+    } else if (score >= 2 || set.contains(_bleeding) || set.contains(_fever)) {
       level = RiskLevel.moderate;
       urgencyHours = 24;
       recommendation = l10n.recModerate;

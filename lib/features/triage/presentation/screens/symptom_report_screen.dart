@@ -25,6 +25,8 @@ class SymptomReportScreen extends ConsumerStatefulWidget {
 class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
   final List<String> selectedSymptoms = [];
   double gestationalAge = 8.0;
+  String severity = 'moderate';
+  String duration = 'today';
   final _notesController = TextEditingController();
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _speechAvailable = false;
@@ -75,9 +77,102 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
     ref.read(symptomReportDraftProvider.notifier).state = SymptomReportDraft(
       symptoms: List<String>.from(selectedSymptoms),
       gestationalAge: gestationalAge,
+      severity: severity,
+      duration: duration,
+      notes: _notesController.text.trim(),
     );
 
     context.push('/triage/analyzing');
+  }
+
+  void _reviewAndSubmit() {
+    final l10n = AppLocalizations.of(context);
+    if (selectedSymptoms.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Review symptom report',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              selectedSymptoms
+                  .map((s) => SymptomCatalog.label(l10n, s))
+                  .join(', '),
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel} • ${_labelFor(severity)} • ${_labelFor(duration)}',
+            ),
+            if (_notesController.text.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(_notesController.text.trim()),
+            ],
+            const SizedBox(height: 16),
+            const Text(
+              'This is a risk screening, not a diagnosis. Seek urgent care if symptoms feel severe or worsening.',
+              style: TextStyle(fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 18),
+            RepairPrimaryButton(
+              label: 'Submit for risk screening',
+              icon: Icons.fact_check,
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _submitSymptoms();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _labelFor(String value) {
+    switch (value) {
+      case 'mild':
+        return 'Mild';
+      case 'moderate':
+        return 'Moderate';
+      case 'severe':
+        return 'Severe';
+      case 'today':
+        return 'Started today';
+      case 'two_days':
+        return '1-2 days';
+      case 'three_plus':
+        return '3+ days';
+      default:
+        return value;
+    }
   }
 
   @override
@@ -114,7 +209,8 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                       min: 4,
                       max: 40,
                       divisions: 72,
-                      label: '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
+                      label:
+                          '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
                       onChanged: (value) =>
                           setState(() => gestationalAge = value),
                     ),
@@ -135,6 +231,62 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                           ),
                         ],
                       ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              RepairCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'How strong are the symptoms?',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'mild', label: Text('Mild')),
+                        ButtonSegment(
+                          value: 'moderate',
+                          label: Text('Moderate'),
+                        ),
+                        ButtonSegment(value: 'severe', label: Text('Severe')),
+                      ],
+                      selected: {severity},
+                      onSelectionChanged: (value) =>
+                          setState(() => severity = value.first),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'When did this start?',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _ChoiceChip(
+                          label: 'Today',
+                          selected: duration == 'today',
+                          onTap: () => setState(() => duration = 'today'),
+                        ),
+                        _ChoiceChip(
+                          label: '1-2 days',
+                          selected: duration == 'two_days',
+                          onTap: () => setState(() => duration = 'two_days'),
+                        ),
+                        _ChoiceChip(
+                          label: '3+ days',
+                          selected: duration == 'three_plus',
+                          onTap: () => setState(() => duration = 'three_plus'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -208,8 +360,8 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                                  Icon(
-                                    SymptomCatalog.iconFor(symptom),
+                            Icon(
+                              SymptomCatalog.iconFor(symptom),
                               size: 30,
                               color: isSelected
                                   ? AppTheme.primary
@@ -217,10 +369,11 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                             ),
                             const SizedBox(height: 8),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                                  child: Text(
-                                    SymptomCatalog.label(l10n, symptom),
-                                    textAlign: TextAlign.center,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
+                              child: Text(
+                                SymptomCatalog.label(l10n, symptom),
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: isSelected
@@ -260,9 +413,8 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                                 ? AppTheme.error
                                 : AppTheme.primary,
                           ),
-                          tooltip: _isListening
-                              ? l10n.voiceStop
-                              : l10n.voiceListen,
+                          tooltip:
+                              _isListening ? l10n.voiceStop : l10n.voiceListen,
                         ),
                       ),
                     ),
@@ -271,10 +423,10 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
               ),
               const SizedBox(height: 24),
               RepairPrimaryButton(
-                label: l10n.getAIRiskAssessment,
-                icon: Icons.auto_awesome,
+                label: 'Review risk screening',
+                icon: Icons.fact_check,
                 onPressed:
-                    selectedSymptoms.isNotEmpty ? _submitSymptoms : null,
+                    selectedSymptoms.isNotEmpty ? _reviewAndSubmit : null,
               ),
               if (selectedSymptoms.isEmpty) ...[
                 const SizedBox(height: 8),
@@ -286,7 +438,7 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
               ] else ...[
                 const SizedBox(height: 12),
                 Text(
-                  l10n.symptomNote,
+                  'Screening uses local guidance rules and is not a diagnosis.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
@@ -297,6 +449,32 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
         ),
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 1),
+    );
+  }
+}
+
+class _ChoiceChip extends StatelessWidget {
+  const _ChoiceChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: AppTheme.primary.withValues(alpha: 0.16),
+      labelStyle: TextStyle(
+        color: selected ? AppTheme.primary : null,
+        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+      ),
     );
   }
 }

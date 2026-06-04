@@ -23,9 +23,8 @@ class AnalysisStepIndicator extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: done || active
-                    ? AppTheme.primary
-                    : Colors.grey.shade300,
+                backgroundColor:
+                    done || active ? AppTheme.primary : Colors.grey.shade300,
                 child: done
                     ? const Icon(Icons.check, size: 16, color: Colors.white)
                     : active

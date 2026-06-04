@@ -22,8 +22,7 @@ class RepairAIApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLanguage = ref.watch(languageProvider);
 
-    final locale =
-        appLanguage == AppLanguage.sw ? const Locale('sw') : const Locale('en');
+    final locale = Locale(appLanguage.localeCode);
 
     final themeMode = ref.watch(themeModeProvider);
 

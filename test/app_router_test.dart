@@ -29,10 +29,27 @@ void main() {
     }
 
     expect(paths, contains('/splash'));
+    expect(paths, contains('/auth'));
+    expect(paths, contains('/auth/sign-in'));
+    expect(paths, contains('/auth/chp'));
+    expect(paths, contains('/auth/create-account'));
+    expect(paths, contains('/auth/otp'));
+    expect(paths, contains('/auth/demo'));
+    expect(paths, contains('/auth/recover'));
     expect(paths, contains('/login/transition'));
     expect(paths, contains('/how-it-works'));
     expect(paths, contains('/triage/analyzing'));
     expect(paths, contains('/triage/risk-result'));
     expect(paths, contains('/triage/symptom-report'));
+  });
+
+  test('route helpers separate public patient and provider routes', () {
+    expect(isPublicRoute('/auth'), isTrue);
+    expect(isPublicRoute('/auth/chp'), isTrue);
+    expect(isPatientRoute('/'), isTrue);
+    expect(isPatientRoute('/referral'), isTrue);
+    expect(isPatientRoute('/dashboard/provider'), isFalse);
+    expect(isProviderRoute('/dashboard/provider'), isTrue);
+    expect(isProviderRoute('/'), isFalse);
   });
 }

@@ -26,35 +26,25 @@ class LanguageScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 8),
           children: [
-            _LanguageTile(
-              title: l10n.languageEnglish,
-              subtitle: l10n.languageEnglish,
-              selected: current == AppLanguage.en,
-              onTap: () async {
-                await ref
-                    .read(languageProvider.notifier)
-                    .setLanguage(AppLanguage.en);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.languageChangedEn)),
-                  );
-                }
-              },
-            ),
-            _LanguageTile(
-              title: l10n.languageSwahili,
-              subtitle: l10n.languageSwahili,
-              selected: current == AppLanguage.sw,
-              onTap: () async {
-                await ref
-                    .read(languageProvider.notifier)
-                    .setLanguage(AppLanguage.sw);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.languageChangedSw)),
-                  );
-                }
-              },
+            ...AppLanguage.values.map(
+              (language) => _LanguageTile(
+                title: language.displayName,
+                selected: current == language,
+                onTap: () async {
+                  await ref
+                      .read(languageProvider.notifier)
+                      .setLanguage(language);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${l10n.language}: ${language.displayName}',
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -66,13 +56,11 @@ class LanguageScreen extends ConsumerWidget {
 class _LanguageTile extends StatelessWidget {
   const _LanguageTile({
     required this.title,
-    required this.subtitle,
     required this.selected,
     required this.onTap,
   });
 
   final String title;
-  final String subtitle;
   final bool selected;
   final VoidCallback onTap;
 
@@ -80,10 +68,8 @@ class _LanguageTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: selected
-          ? const Icon(Icons.check_circle, color: Colors.green)
-          : null,
+      trailing:
+          selected ? const Icon(Icons.check_circle, color: Colors.green) : null,
       onTap: onTap,
     );
   }

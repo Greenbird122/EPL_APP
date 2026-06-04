@@ -25,10 +25,14 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen> {
   }
 
   List<_StepData> _steps(AppLocalizations l10n) => [
-        _StepData('01', l10n.step01Title, l10n.step01Description, Icons.person_add),
-        _StepData('02', l10n.step02Title, l10n.step02Description, Icons.medical_services),
-        _StepData('03', l10n.step03Title, l10n.step03Description, Icons.auto_awesome),
-        _StepData('04', l10n.step04Title, l10n.step04Description, Icons.local_hospital),
+        _StepData(
+            '01', l10n.step01Title, l10n.step01Description, Icons.person_add),
+        _StepData('02', l10n.step02Title, l10n.step02Description,
+            Icons.medical_services),
+        _StepData(
+            '03', l10n.step03Title, l10n.step03Description, Icons.auto_awesome),
+        _StepData('04', l10n.step04Title, l10n.step04Description,
+            Icons.local_hospital),
       ];
 
   @override

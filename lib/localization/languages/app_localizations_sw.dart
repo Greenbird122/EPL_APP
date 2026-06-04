@@ -78,7 +78,8 @@ class AppLocalizationsSw extends AppLocalizations {
   String get savedFacilities => 'Vituo Vilivyohifadhiwa';
 
   @override
-  String get savedFacilitiesSubtitle => 'Ufikiaji wa haraka kwa hospitali unazopenda';
+  String get savedFacilitiesSubtitle =>
+      'Ufikiaji wa haraka kwa hospitali unazopenda';
 
   @override
   String get notifications => 'Arifa';
@@ -147,10 +148,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get selectSymptoms => 'Chagua Dalili';
 
   @override
-  String get getAIRiskAssessment => 'Pata Tathmini ya Hatari ya AI';
+  String get getAIRiskAssessment => 'Pata Uchunguzi wa Hatari';
 
   @override
-  String get aiRiskAssessment => 'Tathmini ya Hatari ya AI';
+  String get aiRiskAssessment => 'Uchunguzi wa Hatari';
 
   @override
   String get basedOnSymptoms => 'Kulingana na dalili zako:';
@@ -239,11 +240,10 @@ class AppLocalizationsSw extends AppLocalizations {
   String get whyThisResult => 'Kwa nini matokeo haya?';
 
   @override
-  String get modelConfidenceLabel => 'Uhakika wa mfano (mfano)';
+  String get modelConfidenceLabel => 'Uhakika wa uchunguzi (mfano)';
 
   @override
-  String get selectSymptomHint =>
-      'Chagua angalau dalili moja ili kuendelea';
+  String get selectSymptomHint => 'Chagua angalau dalili moja ili kuendelea';
 
   @override
   String get gestationalWeekHelper => 'wiki za ujauzito';
@@ -255,8 +255,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get yourPregnancyMatters => 'Ujauzito Wako Una Umuhimu';
 
   @override
-  String get reportSymptomsEarly =>
-      'Ripoti dalili mapema. Huko peke yako.';
+  String get reportSymptomsEarly => 'Ripoti dalili mapema. Huko peke yako.';
 
   @override
   String get worksOffline => 'Inafanya kazi nje ya mtandao';
@@ -288,7 +287,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get symptomNote =>
-      'Taarifa hii inasaidia AI yetu kutoa mwongozo bora.';
+      'Taarifa hii inasaidia uchunguzi kutoa mwongozo ulio wazi.';
 
   @override
   String get skip => 'Ruka';
@@ -326,7 +325,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get platformDescription =>
-      'Msaada wa ujauzito wa mapema, rufaa mahiri, na uchambuzi wa AI — kwa vijijini Kenya.';
+      'Msaada wa ujauzito wa mapema, rufaa mahiri, na uchunguzi unaoeleweka — kwa vijijini Kenya.';
 
   @override
   String get howItWorksTitle => 'Jinsi REPAIR-AI inavyofanya kazi';
@@ -345,7 +344,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get fullPlatform => 'Jukwaa kamili';
 
   @override
-  String get explainableAI => 'AI inayoeleweka';
+  String get explainableAI => 'Uchunguzi unaoeleweka';
 
   @override
   String get howItWorksCardTitle => 'Jinsi REPAIR-AI inavyofanya kazi';
@@ -368,11 +367,11 @@ class AppLocalizationsSw extends AppLocalizations {
       'Chagua dalili na umri wa ujauzito kwa Kiingereza au Kiswahili.';
 
   @override
-  String get step03Title => 'Uchambuzi wa AI';
+  String get step03Title => 'Uchunguzi wa hatari';
 
   @override
   String get step03Description =>
-      'Uchambuzi kwenye kifaa huweka kiwango cha hatari na sababu wazi.';
+      'Uchunguzi wa mfano kwenye kifaa huweka kiwango cha hatari na sababu wazi.';
 
   @override
   String get step04Title => 'Rufaa mahiri';
@@ -399,8 +398,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get onboarding3Title => 'Huduma Endelevu';
 
   @override
-  String get onboarding3Description =>
-      'Pata msaada wa afya ya mwili na akili';
+  String get onboarding3Description => 'Pata msaada wa afya ya mwili na akili';
 
   @override
   String get onboarding4Title => 'Imetengenezwa kwa Kenya';
@@ -410,7 +408,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Kwa mama wa Kenya na wahudumu wa afya ya jamii';
 
   @override
-  String get featureAiTriage => 'Uchambuzi wa AI';
+  String get featureAiTriage => 'Uchunguzi wa Hatari';
 
   @override
   String get featureGisReferrals => 'Rufaa za GIS';
@@ -596,7 +594,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Inachukua muda mrefu kuliko kawaida. Tafadhali jaribu tena.';
 
   @override
-  String get demoChipLabel => 'Onyesho';
+  String get demoChipLabel => 'Mwongozo';
 
   @override
   String get feelingGood => 'Nzuri';
@@ -669,5 +667,388 @@ class AppLocalizationsSw extends AppLocalizations {
       'Habari REPAIR-AI, ninahitaji msaada kuhusu ujauzito wangu.';
 
   @override
-  String get nearestFacilitySubtitle => 'Hospitali ya Kaunti ya Bungoma • 2.3 km';
+  String get nearestFacilitySubtitle =>
+      'Hospitali ya Kaunti ya Bungoma • 2.3 km';
+
+  @override
+  String get chooseAccessSubtitle =>
+      'Chagua jinsi utakavyopata msaada wa ujauzito leo.';
+
+  @override
+  String get continueAsGuest => 'Endelea kama mgeni';
+
+  @override
+  String get continueWithPhoneOtp => 'Endelea kwa OTP ya simu';
+
+  @override
+  String get fastSignInSubtitle =>
+      'Kuingia haraka kwa kina mama na watumiaji wa awali';
+
+  @override
+  String get createAccountTitle => 'Fungua akaunti';
+
+  @override
+  String get createAccountSubtitle => 'Unda wasifu wako wa huduma ya ujauzito';
+
+  @override
+  String get providerAccess => 'Ufikiaji wa mtoa huduma / CHP';
+
+  @override
+  String get signInTitle => 'Ingia';
+
+  @override
+  String get signInSubtitle =>
+      'OTP ya simu inapendekezwa kwa kina mama. Barua pepe pia inapatikana.';
+
+  @override
+  String get providerSignInTitle => 'Ingia kama mtoa huduma / CHP';
+
+  @override
+  String get providerSignInSubtitle =>
+      'Timu zilizoidhinishwa zinaweza kutumia barua pepe kwa kazi za nyanjani.';
+
+  @override
+  String get staffIdOrEmail => 'Kitambulisho cha mfanyakazi au barua pepe';
+
+  @override
+  String get staffIdRequired =>
+      'Weka kitambulisho au barua pepe ya mfanyakazi.';
+
+  @override
+  String get continueToChpDashboard => 'Endelea kwenye dashibodi ya CHP';
+
+  @override
+  String get chpAccessHint =>
+      'Kwa wahudumu wa afya ya jamii na vituo walioidhinishwa pekee.';
+
+  @override
+  String get phoneOtpLabel => 'OTP ya simu';
+
+  @override
+  String get emailLabel => 'Barua pepe';
+
+  @override
+  String get phoneNumberLabel => 'Nambari ya simu';
+
+  @override
+  String get sendOtp => 'Tuma OTP';
+
+  @override
+  String get useGuestAccessInstead => 'Tumia ufikiaji wa mgeni';
+
+  @override
+  String get newToRepairCreateAccount => 'Mgeni REPAIR-AI? Fungua akaunti';
+
+  @override
+  String get createAccountIntro =>
+      'Hii huandaa programu kwa uratibu wa huduma huku ikibaki tayari kwa backend.';
+
+  @override
+  String get careAreaLabel => 'Kaunti / eneo la huduma';
+
+  @override
+  String get consentText =>
+      'Nakubali msaada wa ujauzito, uratibu wa rufaa, na matumizi salama ya data.';
+
+  @override
+  String get continueToPhoneVerification => 'Endelea kuthibitisha simu';
+
+  @override
+  String get alreadyHaveAccountSignIn => 'Tayari una akaunti? Ingia';
+
+  @override
+  String get otpCodeLabel => 'Msimbo wa OTP';
+
+  @override
+  String get verifyAndContinue => 'Thibitisha na uendelee';
+
+  @override
+  String get resendOtp => 'Tuma OTP tena';
+
+  @override
+  String get recoverAccountTitle => 'Rejesha akaunti';
+
+  @override
+  String get recoverAccountSubtitle =>
+      'Tumia simu au barua pepe kurudi kwenye akaunti.';
+
+  @override
+  String get recoveryInstructions =>
+      'Backend ikiunganishwa inaweza kutuma OTP au maelekezo ya kuweka upya nenosiri.';
+
+  @override
+  String get sendRecoveryInstructions => 'Tuma maelekezo ya urejeshaji';
+
+  @override
+  String get backToSignIn => 'Rudi kuingia';
+
+  @override
+  String get useUssdTitle => 'Hakuna intaneti? Tumia USSD';
+
+  @override
+  String get useUssdSubtitle => 'Msaada wa dalili na rufaa kupitia simu.';
+
+  @override
+  String get copyUssdCode => 'Nakili msimbo wa USSD';
+
+  @override
+  String get dialUssd => 'Piga USSD';
+
+  @override
+  String get ussdCopied => 'Msimbo wa USSD umenakiliwa: *384#';
+
+  @override
+  String get homeSupportChannelsSuffix => 'Tumia app, WhatsApp, au USSD.';
+
+  @override
+  String get todayCareTitle => 'Huduma ya Leo';
+
+  @override
+  String get todayCareSavedTitle => 'Ukaguzi wako wa mwisho umehifadhiwa';
+
+  @override
+  String get todayCareEmptyTitle => 'Leo, anza na ukaguzi rahisi';
+
+  @override
+  String get pregnancyWeek => 'Wiki ya ujauzito';
+
+  @override
+  String get noCheckYet => 'Hakuna ukaguzi bado';
+
+  @override
+  String get followReferral => 'Fuata rufaa';
+
+  @override
+  String get getHelp => 'Pata msaada';
+
+  @override
+  String get checkCare => 'Angalia huduma';
+
+  @override
+  String get useUssd => 'Tumia USSD';
+
+  @override
+  String get todayCareEmptyMessage =>
+      'Tuambie unavyojisikia. Unaweza kutumia USSD hata bila intaneti.';
+
+  @override
+  String get todayCareReachedMessage =>
+      'Vizuri. Safari yako ya huduma inaonyesha ulifika kupata huduma. Endelea kujikagua kitu kikibadilika.';
+
+  @override
+  String get todayCareNeedsHelpMessage =>
+      'Msaada upo tayari. Tafuta huduma sasa ikiwa dalili ni kali.';
+
+  @override
+  String get todayCareCompletedMessage =>
+      'Rufaa yako imekamilika. Ripoti zako zimehifadhiwa kwa ufuatiliaji.';
+
+  @override
+  String get todayCareDefaultMessage =>
+      'Hatua inayofuata: fuata rufaa yako au wasiliana na msaada ukihisi wasiwasi.';
+
+  @override
+  String get referralDraft => 'Rufaa ya rasimu';
+
+  @override
+  String get careFound => 'Huduma imepatikana';
+
+  @override
+  String get accepted => 'Imekubaliwa';
+
+  @override
+  String get completed => 'Imekamilika';
+
+  @override
+  String get cancelled => 'Imeghairiwa';
+
+  @override
+  String get careTimelineTitle => 'Mtiririko wa Huduma';
+
+  @override
+  String get careTimelineEmptyMessage =>
+      'Safari yako ya huduma itaonekana hapa baada ya ukaguzi wa kwanza.';
+
+  @override
+  String get careTimelineSavedMessage =>
+      'Hatua zako za hivi karibuni zimehifadhiwa hapa kwa ufuatiliaji.';
+
+  @override
+  String get noCareStepsYet => 'Hakuna hatua za huduma bado';
+
+  @override
+  String get startWithSymptomCheck =>
+      'Anza na ukaguzi wa dalili unapokuwa tayari.';
+
+  @override
+  String get symptomCheckSaved => 'Ukaguzi wa dalili umehifadhiwa';
+
+  @override
+  String get facilityReadyFindCare =>
+      'Hospitali ya Rufaa ya Kaunti ya Bungoma iko tayari kwenye Tafuta Huduma.';
+
+  @override
+  String get referralDrafted => 'Rufaa imeandaliwa';
+
+  @override
+  String get facilityRecommended => 'Kituo kimependekezwa';
+
+  @override
+  String get referralSentStatus => 'Rufaa imetumwa';
+
+  @override
+  String get facilityAccepted => 'Kituo kimekubali';
+
+  @override
+  String get careCompleted => 'Huduma imekamilika';
+
+  @override
+  String get referralCancelled => 'Rufaa imeghairiwa';
+
+  @override
+  String get reachedCare => 'Umefika huduma';
+
+  @override
+  String get careNotReachedYet => 'Bado hujafika huduma';
+
+  @override
+  String get helpRequested => 'Msaada umeombwa';
+
+  @override
+  String get journeyMarkedFollowedUp =>
+      'Safari yako imewekwa kama imefuatiliwa.';
+
+  @override
+  String get keepReferralClose =>
+      'Weka rufaa karibu na tafuta msaada dalili zikiongezeka.';
+
+  @override
+  String get supportChannelsReady => 'Njia za msaada ziko tayari.';
+
+  @override
+  String get didYouReachCare => 'Ulifika kupata huduma?';
+
+  @override
+  String get yesReachedCare => 'Ndiyo, nilifika huduma';
+
+  @override
+  String get notYet => 'Bado';
+
+  @override
+  String get needHelp => 'Nahitaji msaada';
+
+  @override
+  String get reached => 'Umefika';
+
+  @override
+  String get pending => 'Inasubiri';
+
+  @override
+  String get needsHelp => 'Anahitaji msaada';
+
+  @override
+  String get followUpReachedMessage =>
+      'Vizuri. Safari yako ya huduma imewekwa kuwa umefika kupata huduma.';
+
+  @override
+  String get followUpNotYetMessage =>
+      'Ni sawa. Weka rufaa hii karibu na tafuta msaada dalili zikizidi.';
+
+  @override
+  String get followUpNeedsHelpMessage =>
+      'Chaguo za msaada ziko tayari hapa chini. Usisubiri ikiwa dalili ni kali.';
+
+  @override
+  String get followUpUnknownMessage =>
+      'Ukaguzi mfupi husaidia kuweka hatua inayofuata wazi.';
+
+  @override
+  String get careSupportTitle => 'Msaada wa Huduma wa REPAIR-AI';
+
+  @override
+  String get careSupportSubtitle =>
+      'Unaweza kupata msaada kupitia WhatsApp, USSD, au simu ya dharura dalili zikiwa kali.';
+
+  @override
+  String get emergency => 'Dharura';
+
+  @override
+  String get transport => 'Usafiri';
+
+  @override
+  String get findCareTitle => 'Tafuta Huduma';
+
+  @override
+  String get openFacilityDirections => 'Fungua maelekezo ya kituo';
+
+  @override
+  String get transportRequestQueued => 'Ombi la usafiri limewekwa.';
+
+  @override
+  String get referralAlreadyCompleted => 'Rufaa tayari imekamilika.';
+
+  @override
+  String get referralStatusUpdated => 'Hali ya rufaa imesasishwa.';
+
+  @override
+  String get markAccepted => 'Weka imekubaliwa';
+
+  @override
+  String get markCompleted => 'Weka imekamilika';
+
+  @override
+  String get restartReferral => 'Anzisha rufaa tena';
+
+  @override
+  String get viewReportsTimeline => 'Tazama mtiririko wa ripoti';
+
+  @override
+  String get chpWorkspaceTitle => 'Sehemu ya kazi ya CHP';
+
+  @override
+  String get chpWorkspaceSubtitle =>
+      'Kagua kina mama wanaohitaji huduma, fuatilia rufaa, na shughulikia kesi za dharura.';
+
+  @override
+  String get activeCases => 'Kesi zinazoendelea';
+
+  @override
+  String get highPriority => 'Kipaumbele cha juu';
+
+  @override
+  String get pendingFollowUps => 'Ufuatiliaji unasubiri';
+
+  @override
+  String get caseQueue => 'Foleni ya kesi';
+
+  @override
+  String get allCases => 'Zote';
+
+  @override
+  String get noCasesMatchFilter =>
+      'Hakuna kesi zinazolingana na kichujio hiki.';
+
+  @override
+  String get callMother => 'Mpigie mama';
+
+  @override
+  String get message => 'Ujumbe';
+
+  @override
+  String get markContacted => 'Weka amewasiliana';
+
+  @override
+  String get contacted => 'Amewasiliana';
+
+  @override
+  String get assignedArea => 'Eneo ulilopangiwa';
+
+  @override
+  String get lastUpdate => 'Sasisho la mwisho';
+
+  @override
+  String get today => 'Leo';
+
+  @override
+  String get yesterday => 'Jana';
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
+import 'package:repair_ai/features/care_journey/presentation/widgets/follow_up_prompt.dart';
 import 'package:repair_ai/features/triage/application/triage_controller.dart';
 import 'package:repair_ai/features/triage/domain/triage_result.dart';
 import 'package:repair_ai/features/triage/domain/triage_rules.dart';
@@ -29,6 +30,9 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
   bool _persisted = false;
   List<String>? _savedSymptoms;
   double? _savedGestationalAge;
+  String? _savedSeverity;
+  String? _savedDuration;
+  String? _savedNotes;
 
   @override
   void initState() {
@@ -44,6 +48,9 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
 
     _savedSymptoms = List<String>.from(draft.symptoms);
     _savedGestationalAge = draft.gestationalAge;
+    _savedSeverity = draft.severity;
+    _savedDuration = draft.duration;
+    _savedNotes = draft.notes;
 
     ref.read(reportHistoryProvider.notifier).addReport(
           SymptomReport(
@@ -51,6 +58,9 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
             date: DateTime.now(),
             symptoms: draft.symptoms,
             gestationalAge: draft.gestationalAge,
+            severity: draft.severity,
+            duration: draft.duration,
+            notes: draft.notes,
             riskLevel: result.riskLevel.storageKey,
             recommendation: result.recommendation,
             confidence: result.confidence,
@@ -79,11 +89,11 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
       );
     }
 
-    final symptoms = _savedSymptoms ??
-        draft?.symptoms ??
-        const <String>[];
-    final gestationalAge =
-        _savedGestationalAge ?? draft?.gestationalAge ?? 8.0;
+    final symptoms = _savedSymptoms ?? draft?.symptoms ?? const <String>[];
+    final gestationalAge = _savedGestationalAge ?? draft?.gestationalAge ?? 8.0;
+    final severity = _savedSeverity ?? draft?.severity ?? 'moderate';
+    final duration = _savedDuration ?? draft?.duration ?? 'today';
+    final notes = _savedNotes ?? draft?.notes ?? '';
     final trimester = TriageRules.trimesterLabel(gestationalAge, l10n);
     final confidencePct = (result.confidence * 100).round();
 
@@ -125,7 +135,7 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
                       gradient: LinearGradient(
                         colors: [
                           result.riskLevel.color.withValues(alpha: 0.12),
-                          Colors.white,
+                          Theme.of(context).colorScheme.surface,
                         ],
                       ),
                     ),
@@ -216,6 +226,21 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${_labelFor(severity)} • ${_labelFor(duration)}',
+                        style: TextStyle(
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (notes.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          notes,
+                          style: const TextStyle(fontSize: 14, height: 1.4),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -252,6 +277,21 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
               ),
               if (result.riskLevel == RiskLevel.high) ...[
                 const SizedBox(height: 12),
+                Card(
+                  color: AppTheme.error.withValues(alpha: 0.12),
+                  child: const Padding(
+                    padding: EdgeInsets.all(14),
+                    child: Text(
+                      'Urgent: do not wait for a digital referral if symptoms are severe. Go to care now or call emergency support.',
+                      style: TextStyle(
+                        color: AppTheme.error,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -265,6 +305,8 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
                     label: Text(l10n.callEmergency),
                   ),
                 ),
+                const SizedBox(height: 12),
+                const FollowUpPrompt(compact: true),
               ],
               const SizedBox(height: 24),
               Row(
@@ -296,5 +338,24 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
         ),
       ),
     );
+  }
+
+  String _labelFor(String value) {
+    switch (value) {
+      case 'mild':
+        return 'Mild';
+      case 'moderate':
+        return 'Moderate';
+      case 'severe':
+        return 'Severe';
+      case 'today':
+        return 'Started today';
+      case 'two_days':
+        return '1-2 days';
+      case 'three_plus':
+        return '3+ days';
+      default:
+        return value;
+    }
   }
 }

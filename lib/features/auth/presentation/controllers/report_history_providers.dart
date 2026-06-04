@@ -7,6 +7,9 @@ class SymptomReport {
   final DateTime date;
   final List<String> symptoms;
   final double gestationalAge;
+  final String severity;
+  final String duration;
+  final String notes;
   final String riskLevel;
   final String recommendation;
   final double confidence;
@@ -16,6 +19,9 @@ class SymptomReport {
     required this.date,
     required this.symptoms,
     required this.gestationalAge,
+    this.severity = 'moderate',
+    this.duration = 'today',
+    this.notes = '',
     required this.riskLevel,
     required this.recommendation,
     this.confidence = 0.85,
@@ -26,6 +32,9 @@ class SymptomReport {
         'date': date.toIso8601String(),
         'symptoms': symptoms,
         'gestationalAge': gestationalAge,
+        'severity': severity,
+        'duration': duration,
+        'notes': notes,
         'riskLevel': riskLevel,
         'recommendation': recommendation,
         'confidence': confidence,
@@ -36,6 +45,9 @@ class SymptomReport {
         date: DateTime.parse(json['date']),
         symptoms: List<String>.from(json['symptoms']),
         gestationalAge: (json['gestationalAge'] as num).toDouble(),
+        severity: json['severity'] as String? ?? 'moderate',
+        duration: json['duration'] as String? ?? 'today',
+        notes: json['notes'] as String? ?? '',
         riskLevel: json['riskLevel'] as String,
         recommendation: json['recommendation'] as String,
         confidence: (json['confidence'] as num?)?.toDouble() ?? 0.85,
@@ -45,10 +57,16 @@ class SymptomReport {
 class SymptomReportDraft {
   final List<String> symptoms;
   final double gestationalAge;
+  final String severity;
+  final String duration;
+  final String notes;
 
   const SymptomReportDraft({
     required this.symptoms,
     required this.gestationalAge,
+    this.severity = 'moderate',
+    this.duration = 'today',
+    this.notes = '',
   });
 }
 
@@ -68,6 +86,11 @@ class ReportHistoryNotifier extends StateNotifier<List<SymptomReport>> {
 
   Future<void> addReport(SymptomReport report) async {
     state = [...state, report];
+    await _saveReports();
+  }
+
+  Future<void> deleteReport(String id) async {
+    state = state.where((report) => report.id != id).toList();
     await _saveReports();
   }
 

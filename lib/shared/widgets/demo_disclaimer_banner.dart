@@ -31,7 +31,7 @@ class DemoDisclaimerBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Demo assessment — not a medical diagnosis. Seek care if you feel unwell or worried.',
+              'Health guidance only - not a medical diagnosis. Seek care if you feel unwell or worried.',
               style: TextStyle(
                 fontSize: compact ? 12 : 13,
                 height: 1.35,

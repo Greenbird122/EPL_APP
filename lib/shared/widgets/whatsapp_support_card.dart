@@ -76,7 +76,8 @@ class _ChatPreview extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.3)),
+        border:
+            Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repair_ai/core/config/themes.dart';
 
 class RepairCard extends StatelessWidget {
   const RepairCard({
@@ -19,7 +20,7 @@ class RepairCard extends StatelessWidget {
     final card = Card(
       elevation: elevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radius),
       ),
       child: Padding(padding: padding, child: child),
     );
@@ -30,7 +31,7 @@ class RepairCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radius),
         child: card,
       ),
     );

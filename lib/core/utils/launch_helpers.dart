@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 const kEmergencyPhone = '999';
 const kFacilityMapsQuery = 'Bungoma+County+Referral+Hospital';
+const kRepairAiUssdCode = '*384#';
 
 Future<void> launchEmergencyCall() async {
   final uri = Uri.parse('tel:$kEmergencyPhone');
@@ -33,4 +34,10 @@ Future<void> launchWhatsAppHelp([BuildContext? context]) async {
     'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
   );
   await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+Future<bool> launchUssdCode() async {
+  final uri = Uri.parse('tel:${Uri.encodeComponent(kRepairAiUssdCode)}');
+  if (!await canLaunchUrl(uri)) return false;
+  return launchUrl(uri);
 }

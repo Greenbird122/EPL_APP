@@ -6,9 +6,11 @@ class AppTheme {
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFFFC107);
   static const Color error = Color(0xFFEF4444);
+  static const double radius = 12;
 
   static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Colors.white;
+  static const Color cardBorder = Color(0xFFE7E9F3);
 
   static const Color darkBackground = Color(0xFF121218);
   static const Color darkSurface = Color(0xFF1E1E28);
@@ -42,7 +44,7 @@ class AppTheme {
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: scaffold,
-      fontFamily: 'Poppins',
+      fontFamily: 'Inter',
       appBarTheme: const AppBarTheme(
         backgroundColor: primary,
         foregroundColor: Colors.white,
@@ -50,9 +52,13 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: surface,
-        elevation: isDark ? 2 : 4,
+        elevation: isDark ? 1 : 2,
+        shadowColor: primary.withValues(alpha: isDark ? 0.28 : 0.12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(
+            color: isDark ? Colors.white12 : cardBorder,
+          ),
         ),
       ),
       dividerColor: isDark ? Colors.white12 : Colors.grey.shade200,
@@ -60,28 +66,28 @@ class AppTheme {
         filled: true,
         fillColor: isDark ? darkSurface : Colors.grey.shade50,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(radius),
         ),
       ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
-          fontSize: 28,
+          fontSize: 27,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
         ),
         headlineMedium: TextStyle(
-          fontSize: 24,
+          fontSize: 23,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
         ),
-        bodyLarge: TextStyle(fontSize: 18, fontFamily: 'Poppins'),
-        bodyMedium: TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+        bodyLarge: TextStyle(fontSize: 17, fontFamily: 'Inter'),
+        bodyMedium: TextStyle(fontSize: 15, fontFamily: 'Inter'),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(radius),
           ),
         ),
       ),

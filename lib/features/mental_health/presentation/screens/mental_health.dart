@@ -23,9 +23,24 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     final feelings = [
-      {'emoji': '😊', 'key': 'good', 'label': l10n.feelingGood, 'color': Colors.green},
-      {'emoji': '😐', 'key': 'okay', 'label': l10n.feelingOkay, 'color': Colors.orange},
-      {'emoji': '😔', 'key': 'sad', 'label': l10n.feelingSad, 'color': Colors.blue},
+      {
+        'emoji': '😊',
+        'key': 'good',
+        'label': l10n.feelingGood,
+        'color': Colors.green
+      },
+      {
+        'emoji': '😐',
+        'key': 'okay',
+        'label': l10n.feelingOkay,
+        'color': Colors.orange
+      },
+      {
+        'emoji': '😔',
+        'key': 'sad',
+        'label': l10n.feelingSad,
+        'color': Colors.blue
+      },
       {
         'emoji': '😢',
         'key': 'very_sad',
@@ -52,6 +67,26 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
           children: [
             const DemoDisclaimerBanner(compact: true),
             const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                height: 132,
+                width: double.infinity,
+                child: Image.asset(
+                  'assets/illustrations/mental_health.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => ColoredBox(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    child: const Icon(
+                      Icons.psychology,
+                      color: AppTheme.primary,
+                      size: 42,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               l10n.howAreYouFeeling,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -62,6 +97,29 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
             Text(
               l10n.feelingsMatter,
               style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 14),
+            Card(
+              color: AppTheme.error.withValues(alpha: 0.08),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    const Icon(Icons.support_agent, color: AppTheme.error),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'If you feel unsafe, overwhelmed, or at risk of harming yourself, contact emergency support or a trusted provider now.',
+                        style: TextStyle(
+                          color: scheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 24),
             GridView.builder(
@@ -104,9 +162,11 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
                           feeling['label'] as String,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? feeling['color'] as Color : null,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color:
+                                isSelected ? feeling['color'] as Color : null,
                             fontSize: 12,
                           ),
                         ),
@@ -138,6 +198,17 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
                         l10n.feelingGuidance,
                         style: const TextStyle(fontSize: 16, height: 1.5),
                       ),
+                      if (selectedFeelingKey == 'very_sad' ||
+                          selectedFeelingKey == 'anxious') ...[
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Recommended: talk to a counselor or community health provider today.',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.error,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       Row(
                         children: [
