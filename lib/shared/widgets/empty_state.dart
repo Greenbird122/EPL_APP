@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/shared/widgets/repair_buttons.dart';
 
 class EmptyState extends StatelessWidget {
@@ -22,9 +23,13 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = RepairBreakpoints.isCompactPhone(context);
+    final imageWidth = (MediaQuery.sizeOf(context).width * 0.42)
+        .clamp(126.0, 168.0)
+        .toDouble();
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(compact ? 20 : 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -32,8 +37,8 @@ class EmptyState extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: SizedBox(
-                  width: 168,
-                  height: 112,
+                  width: imageWidth,
+                  height: imageWidth * 0.66,
                   child: Image.asset(
                     imageAsset!,
                     fit: BoxFit.cover,
@@ -48,7 +53,7 @@ class EmptyState extends StatelessWidget {
             else
               Icon(
                 icon,
-                size: 72,
+                size: compact ? 58 : 72,
                 color: AppTheme.primary.withValues(alpha: 0.5),
               ),
             const SizedBox(height: 16),

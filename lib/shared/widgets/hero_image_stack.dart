@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 
 /// Full-bleed blurred photo background + gradient scrim + optional sharp foreground card.
 class HeroImageStack extends StatelessWidget {
@@ -81,13 +82,14 @@ class _ForegroundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardHeight = height ?? MediaQuery.of(context).size.height * 0.28;
-    final cardWidth = MediaQuery.of(context).size.width * 0.72;
+    final size = MediaQuery.sizeOf(context);
+    final cardHeight = height ?? RepairSizing.foregroundImageHeight(context);
+    final cardWidth = (size.width * 0.72).clamp(220.0, 420.0);
 
     return Center(
       child: Container(
         width: cardWidth,
-        height: cardHeight.clamp(160.0, 280.0),
+        height: cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
@@ -137,8 +139,9 @@ class HomeHeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final heroHeight = RepairSizing.heroHeight(context);
     return SizedBox(
-      height: 220,
+      height: heroHeight,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
@@ -150,9 +153,9 @@ class HomeHeroBanner extends StatelessWidget {
           if (topChild != null)
             Positioned(top: 12, left: 16, right: 16, child: topChild!),
           Positioned(
-            bottom: 24,
-            left: 20,
-            right: 20,
+            bottom: RepairBreakpoints.isShortScreen(context) ? 16 : 24,
+            left: RepairBreakpoints.isCompactPhone(context) ? 16 : 20,
+            right: RepairBreakpoints.isCompactPhone(context) ? 16 : 20,
             child: bottomChild,
           ),
         ],

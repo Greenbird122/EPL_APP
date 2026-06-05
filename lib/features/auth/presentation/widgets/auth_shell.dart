@@ -1,9 +1,12 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:repair_ai/core/config/backend_config.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
+import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/shared/widgets/language_toggle.dart';
 import 'package:repair_ai/shared/widgets/theme_mode_toggle.dart';
@@ -18,6 +21,11 @@ class AuthShell extends StatelessWidget {
     this.showBack = false,
     this.imageOverlayOpacity = 0.3,
     this.showCompactSupport = true,
+    this.errorMessage,
+    this.statusMessage,
+    this.onDismissError,
+    this.isLoading = false,
+    this.statusTone = AuthStatusTone.info,
   });
 
   final String title;
@@ -27,6 +35,11 @@ class AuthShell extends StatelessWidget {
   final bool showBack;
   final double imageOverlayOpacity;
   final bool showCompactSupport;
+  final String? errorMessage;
+  final String? statusMessage;
+  final VoidCallback? onDismissError;
+  final bool isLoading;
+  final AuthStatusTone statusTone;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +47,16 @@ class AuthShell extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final image = imageAsset ?? 'assets/illustrations/mama.jpeg';
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final size = MediaQuery.sizeOf(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final keyboardOpen = viewInsets.bottom > 0;
+    final topGap = keyboardOpen
+        ? 28.0
+        : (size.height * 0.13).clamp(56.0, 118.0).toDouble();
+    final horizontalPadding = size.width < 380 ? 12.0 : 14.0;
+    final panelPadding = size.width < 380
+        ? const EdgeInsets.fromLTRB(14, 16, 14, 16)
+        : const EdgeInsets.fromLTRB(18, 20, 18, 20);
     final glassTint = isDark
         ? const Color(0xFF1F1737).withValues(alpha: 0.68)
         : Colors.white.withValues(alpha: 0.58);
@@ -73,7 +96,13 @@ class AuthShell extends StatelessWidget {
           SafeArea(
             bottom: false,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                8,
+                horizontalPadding,
+                viewInsets.bottom + 28,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -93,7 +122,7 @@ class AuthShell extends StatelessWidget {
                       const _GlassControlPill(child: ThemeModeToggle()),
                     ],
                   ),
-                  const SizedBox(height: 118),
+                  SizedBox(height: topGap),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
@@ -109,6 +138,7 @@ class AuthShell extends StatelessWidget {
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
+                                fontSize: size.width < 360 ? 24 : null,
                               ),
                         ),
                         const SizedBox(height: 6),
@@ -125,10 +155,24 @@ class AuthShell extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
+                  if (errorMessage != null) ...[
+                    AuthErrorBanner(
+                      message: errorMessage!,
+                      onDismiss: onDismissError,
+                    ),
+                    const SizedBox(height: 12),
+                  ] else if (statusMessage != null || isLoading) ...[
+                    AuthStatusBanner(
+                      message: statusMessage ?? 'Connecting to REPAIR-AI...',
+                      tone: statusTone,
+                      showProgress: isLoading,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   ClipRRect(
                     borderRadius: BorderRadius.circular(26),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
                         decoration: BoxDecoration(
                           color: glassTint,
@@ -146,47 +190,54 @@ class AuthShell extends StatelessWidget {
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
-                        child: Theme(
-                          data: Theme.of(context).copyWith(
-                            inputDecorationTheme: Theme.of(context)
-                                .inputDecorationTheme
-                                .copyWith(fillColor: fieldFill, filled: true),
-                            outlinedButtonTheme: OutlinedButtonThemeData(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.primary,
-                                side: BorderSide(
-                                  color:
-                                      AppTheme.primary.withValues(alpha: 0.45),
+                        padding: panelPadding,
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: Theme(
+                            data: Theme.of(context).copyWith(
+                              inputDecorationTheme: Theme.of(context)
+                                  .inputDecorationTheme
+                                  .copyWith(fillColor: fieldFill, filled: true),
+                              outlinedButtonTheme: OutlinedButtonThemeData(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primary,
+                                  side: BorderSide(
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.45,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          child: Column(
-                            children: [
-                              child,
-                              if (showCompactSupport) ...[
-                                const SizedBox(height: 14),
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  spacing: 6,
-                                  children: [
-                                    Text(
-                                      l10n.useUssdTitle,
-                                      style: TextStyle(
-                                        color: scheme.onSurfaceVariant,
-                                        fontSize: 12,
+                            child: Column(
+                              children: [
+                                child,
+                                if (showCompactSupport) ...[
+                                  const SizedBox(height: 14),
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    spacing: 6,
+                                    children: [
+                                      Text(
+                                        kDebugMode
+                                            ? '${l10n.useUssdTitle} · ${BackendConfig.defaultBaseUrl}'
+                                            : l10n.useUssdTitle,
+                                        style: TextStyle(
+                                          color: scheme.onSurfaceVariant,
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    ),
-                                    TextButton(
-                                      onPressed: launchUssdCode,
-                                      child: const Text(kRepairAiUssdCode),
-                                    ),
-                                  ],
-                                ),
+                                      TextButton(
+                                        onPressed: launchUssdCode,
+                                        child: const Text(kRepairAiUssdCode),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -212,7 +263,7 @@ class _GlassControlPill extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.72),
@@ -236,7 +287,7 @@ class _GlassIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipOval(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Material(
           color: Colors.white.withValues(alpha: 0.72),
           shape: const CircleBorder(),

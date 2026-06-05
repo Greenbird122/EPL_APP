@@ -21,8 +21,10 @@ class OtpScreen extends ConsumerStatefulWidget {
 class _OtpScreenState extends ConsumerState<OtpScreen> {
   final _phoneController = TextEditingController(text: '+254');
   final _codeController = TextEditingController();
-  bool _codeSent = false;
+  final bool _codeSent = false;
   bool _isSubmitting = false;
+  String? _errorMessage;
+  String? _statusMessage;
 
   @override
   void dispose() {
@@ -34,25 +36,24 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<void> _sendCode() async {
     final phone = _phoneController.text.trim();
     if (phone.length < 10) {
-      showAppErrorSnackBar(context, 'Enter a valid phone number.');
+      const message = 'Enter a valid phone number.';
+      setState(() => _errorMessage = message);
+      showAppErrorSnackBar(context, message);
       return;
     }
-    setState(() => _isSubmitting = true);
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
     setState(() {
-      _isSubmitting = false;
-      _codeSent = true;
-      _codeController.text = '123456';
+      _errorMessage =
+          'Phone OTP is not connected to the backend yet. Use username and password for now.';
+      _statusMessage = null;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('OTP sent. Use 123456 for this build.')),
-    );
   }
 
   Future<void> _verifyCode() async {
     if (_codeController.text.trim() != '123456') {
-      showAppErrorSnackBar(context, 'Use OTP 123456.');
+      const message =
+          'Phone OTP is not connected to the backend yet. Use username and password for now.';
+      setState(() => _errorMessage = message);
+      showAppErrorSnackBar(context, message);
       return;
     }
     setState(() => _isSubmitting = true);
@@ -82,6 +83,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           ? l10n.fastSignInSubtitle
           : l10n.recoverAccountSubtitle,
       showBack: true,
+      errorMessage: _errorMessage,
+      statusMessage: _statusMessage,
+      isLoading: _isSubmitting,
+      onDismissError: () => setState(() => _errorMessage = null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

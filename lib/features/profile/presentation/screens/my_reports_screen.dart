@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
 import 'package:repair_ai/features/triage/domain/symptom_catalog.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
@@ -10,6 +11,7 @@ import 'package:repair_ai/shared/widgets/bottom_nav.dart';
 import 'package:repair_ai/shared/widgets/empty_state.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/repair_buttons.dart';
+import 'package:repair_ai/shared/widgets/responsive_page.dart';
 
 class MyReportsScreen extends ConsumerWidget {
   const MyReportsScreen({super.key});
@@ -222,42 +224,47 @@ class MyReportsScreen extends ConsumerWidget {
               onAction: () => context.push('/triage/symptom-report'),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: RepairInsets.scroll(context),
               itemCount: reports.length,
               itemBuilder: (context, index) {
                 final report = reports[reports.length - 1 - index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          _riskColor(report.riskLevel).withValues(alpha: 0.15),
-                      child: Icon(
-                        Icons.medical_services,
-                        color: _riskColor(report.riskLevel),
+                return ResponsivePageShell(
+                  maxWidth: RepairSizing.formMaxWidth(context),
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _riskColor(report.riskLevel)
+                            .withValues(alpha: 0.15),
+                        child: Icon(
+                          Icons.medical_services,
+                          color: _riskColor(report.riskLevel),
+                        ),
                       ),
+                      title: Text(
+                        symptomLine(report),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        '${report.date.day}/${report.date.month}/${report.date.year} • '
+                        '${report.gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel} • '
+                        '${_riskLabel(l10n, report.riskLevel)}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _showDetail(context, ref, report),
                     ),
-                    title: Text(
-                      symptomLine(report),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      '${report.date.day}/${report.date.month}/${report.date.year} • '
-                      '${report.gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel} • '
-                      '${_riskLabel(l10n, report.riskLevel)}',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _showDetail(context, ref, report),
                   ),
                 );
               },
             ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 3),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 2),
     );
   }
 }

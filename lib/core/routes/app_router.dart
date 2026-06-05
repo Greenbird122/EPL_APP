@@ -4,11 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/widgets/loading_error_state.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
+import 'package:repair_ai/features/anc/domain/anc_profile.dart';
+import 'package:repair_ai/features/anc/presentation/screens/anc_profile_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/auth_entry_screen.dart';
+import 'package:repair_ai/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/chp_sign_in_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/create_account_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/otp_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/recover_account_screen.dart';
+import 'package:repair_ai/features/care/presentation/screens/care_screen.dart';
+import 'package:repair_ai/features/medication_tracking/presentation/screens/medication_tracking_screen.dart';
+import 'package:repair_ai/features/profile/presentation/screens/complete_care_profile_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/login_transition_screen.dart';
 import 'package:repair_ai/features/onboarding/presentation/screens/how_it_works_screen.dart';
 import 'package:repair_ai/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -44,7 +50,8 @@ bool isPublicRoute(String path) {
 }
 
 bool isProviderRoute(String path) {
-  return path == '/dashboard/provider';
+  return path == '/dashboard/provider' ||
+      path == '/dashboard/provider/anc-profile';
 }
 
 bool isPatientRoute(String path) {
@@ -52,11 +59,18 @@ bool isPatientRoute(String path) {
       path == '/triage/symptom-report' ||
       path == '/triage/analyzing' ||
       path == '/triage/risk-result' ||
+      path == '/care' ||
+      path == '/care/anc-profile' ||
       path == '/referral' ||
       path == '/profile' ||
+      path == '/profile/complete-care' ||
       path == '/profile/language' ||
       path == '/history' ||
       path == '/mental-health';
+}
+
+bool isSharedProtectedRoute(String path) {
+  return path == '/medication-tracking';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -182,8 +196,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ReferralScreen(),
       ),
       GoRoute(
+        path: '/care',
+        builder: (context, state) => const CareScreen(),
+      ),
+      GoRoute(
+        path: '/care/anc-profile',
+        builder: (context, state) => const AncProfileScreen(
+          mode: AncProfileMode.patientReadOnly,
+          patientId: 'current-patient',
+        ),
+      ),
+      GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/profile/complete-care',
+        builder: (context, state) => const CompleteCareProfileScreen(),
       ),
       GoRoute(
         path: '/profile/language',
@@ -198,8 +231,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const MentalHealthScreen(),
       ),
       GoRoute(
+        path: '/medication-tracking',
+        builder: (context, state) {
+          final query = state.uri.queryParameters;
+          final providerRequested = query['mode'] == 'provider';
+          final canUseProviderMode =
+              authSession.isProvider && providerRequested;
+
+          return MedicationTrackingScreen(
+            mode: canUseProviderMode
+                ? MedicationTrackingMode.providerManage
+                : MedicationTrackingMode.patientReadOnly,
+            patientId: query['patientId'] ?? 'current-patient',
+            patientName: query['patientName'],
+          );
+        },
+      ),
+      GoRoute(
         path: '/dashboard/provider',
         builder: (context, state) => const ProviderDashboard(),
+      ),
+      GoRoute(
+        path: '/dashboard/provider/anc-profile',
+        builder: (context, state) {
+          final query = state.uri.queryParameters;
+          return AncProfileScreen(
+            mode: AncProfileMode.providerManage,
+            patientId: query['patientId'] ?? 'current-patient',
+            patientName: query['patientName'],
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) {

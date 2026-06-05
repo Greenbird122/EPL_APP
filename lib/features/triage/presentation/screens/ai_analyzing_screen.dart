@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/utils/async_guard.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
 import 'package:repair_ai/features/triage/application/triage_controller.dart';
@@ -11,6 +12,7 @@ import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/motherly_quote_card.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
+import 'package:repair_ai/shared/widgets/repair_buttons.dart';
 import 'package:repair_ai/core/widgets/loading_error_state.dart';
 
 import '../widgets/analysis_step_indicator.dart';
@@ -28,6 +30,7 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
   Timer? _quoteTimer;
   bool _failed = false;
   bool _timedOut = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -43,9 +46,15 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
 
   Future<void> _runAnalysis() async {
     final l10n = AppLocalizations.of(context);
+    _quoteTimer?.cancel();
     final draft = ref.read(symptomReportDraftProvider);
     if (draft == null || draft.symptoms.isEmpty) {
-      if (mounted) setState(() => _failed = true);
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _errorMessage = l10n.selectSymptomHint;
+        });
+      }
       return;
     }
 
@@ -72,9 +81,8 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
 
         final result = await runWithTimeout(
           () async {
-            return ref.read(triageControllerProvider).runAssessment(
-                  symptoms: draft.symptoms,
-                  gestationalAgeWeeks: draft.gestationalAge,
+            return ref.read(triageControllerProvider).runBackendAssessment(
+                  draft: draft,
                   l10n: l10n,
                 );
           },
@@ -86,8 +94,23 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
           return;
         }
       }, minimum: const Duration(seconds: 5));
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
+    } on ApiException catch (error) {
+      _quoteTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _errorMessage = _friendlyAnalysisError(error, l10n);
+        });
+      }
+      return;
+    } catch (error) {
+      _quoteTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _errorMessage = _friendlyUnknownError(error, l10n);
+        });
+      }
       return;
     }
 
@@ -99,6 +122,39 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
     context.go('/triage/risk-result');
   }
 
+  void _useLocalFallback() {
+    final l10n = AppLocalizations.of(context);
+    final draft = ref.read(symptomReportDraftProvider);
+    if (draft == null || draft.symptoms.isEmpty) {
+      setState(() => _errorMessage = l10n.selectSymptomHint);
+      return;
+    }
+    ref.read(triageControllerProvider).runLocalFallbackAssessment(
+          draft: draft,
+          l10n: l10n,
+        );
+    context.go('/triage/risk-result');
+  }
+
+  String _friendlyAnalysisError(ApiException error, AppLocalizations l10n) {
+    final message = error.message;
+    return switch (error.statusCode) {
+      401 => '${message.trim()} ${l10n.patientProfileRequiredForAi}',
+      403 => message,
+      503 => l10n.aiServiceUnavailable,
+      502 || 504 => l10n.aiServiceUnavailable,
+      _ => message.trim().isEmpty ? l10n.aiServiceUnavailable : message,
+    };
+  }
+
+  String _friendlyUnknownError(Object error, AppLocalizations l10n) {
+    final message = error.toString();
+    if (message.contains('Patient profile') || message.contains('profile')) {
+      return l10n.patientProfileRequiredForAi;
+    }
+    return l10n.aiServiceUnavailable;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -107,10 +163,9 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
     return Scaffold(
       appBar: RepairAppBar(
         title: l10n.aiRiskAssessment,
-        showDemoChip: true,
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,16 +174,26 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
               const SizedBox(height: 24),
               if (_failed || _timedOut) ...[
                 ErrorState(
-                  message: _timedOut ? l10n.timeoutError : l10n.analysisFailed,
+                  message: _timedOut
+                      ? l10n.timeoutError
+                      : (_errorMessage ?? l10n.aiServiceUnavailable),
                   retryText: l10n.retry,
                   onRetry: () {
                     setState(() {
                       _failed = false;
                       _timedOut = false;
+                      _errorMessage = null;
                     });
                     _runAnalysis();
                   },
                 ),
+                const SizedBox(height: 12),
+                RepairPrimaryButton(
+                  label: l10n.useLocalSafetyScreening,
+                  icon: Icons.health_and_safety_outlined,
+                  onPressed: _useLocalFallback,
+                ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => context.go('/triage/symptom-report'),
                   child: Text(l10n.triageBack),
@@ -146,7 +211,7 @@ class _AiAnalyzingScreenState extends ConsumerState<AiAnalyzingScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  l10n.onDeviceAnalysis,
+                  'Running backend AI screening',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,

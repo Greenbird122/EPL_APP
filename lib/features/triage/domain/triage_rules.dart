@@ -95,6 +95,7 @@ class TriageRules {
       reasons: reasons,
       recommendation: recommendation,
       urgencyHours: urgencyHours,
+      needsReferral: level != RiskLevel.low,
     );
   }
 

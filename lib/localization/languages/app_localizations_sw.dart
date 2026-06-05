@@ -106,6 +106,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get triage => 'Triage';
 
   @override
+  String get careTab => 'Huduma';
+
+  @override
   String get profile => 'Wasifu';
 
   @override
@@ -277,7 +280,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get referralSuccessMessage =>
-      'Hospitali ya Rufaa ya Kaunti ya Bungoma imearifiwa.';
+      'Kituo kilichothibitishwa ulichochagua kimearifiwa.';
 
   @override
   String get viewHistory => 'Angalia historia';
@@ -620,7 +623,7 @@ class AppLocalizationsSw extends AppLocalizations {
       'Vikundi vya jamii vinakuja hivi karibuni. Tumia WhatsApp kwa msaada sasa.';
 
   @override
-  String get referralHospitalName => 'Hospitali ya Rufaa ya Kaunti ya Bungoma';
+  String get referralHospitalName => 'Kituo kilichothibitishwa ulichochagua';
 
   @override
   String get facilityChip247 => '24/7';
@@ -663,12 +666,27 @@ class AppLocalizationsSw extends AppLocalizations {
   String get languageChangedSw => 'Lugha imebadilishwa kuwa Kiswahili';
 
   @override
+  String get changePassword => 'Badilisha nenosiri';
+
+  @override
+  String get changePasswordSubtitle =>
+      'Sasisha nenosiri la akaunti yako ya mfumo';
+
+  @override
   String get whatsAppMessage =>
       'Habari REPAIR-AI, ninahitaji msaada kuhusu ujauzito wangu.';
 
   @override
   String get nearestFacilitySubtitle =>
       'Hospitali ya Kaunti ya Bungoma • 2.3 km';
+
+  @override
+  String get medicationTrackerTitle =>
+      'Kifuatiliaji cha matibabu na virutubisho';
+
+  @override
+  String get medicationTrackerSubtitle =>
+      'Fuatilia vidonge vilivyotolewa na vilivyobaki kwa tarehe';
 
   @override
   String get chooseAccessSubtitle =>
@@ -885,7 +903,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get facilityReadyFindCare =>
-      'Hospitali ya Rufaa ya Kaunti ya Bungoma iko tayari kwenye Tafuta Huduma.';
+      'Kituo kilichothibitishwa ulichochagua kiko tayari kwenye Tafuta Huduma.';
 
   @override
   String get referralDrafted => 'Rufaa imeandaliwa';
@@ -1038,6 +1056,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get markContacted => 'Weka amewasiliana';
 
   @override
+  String get drugRegistry => 'Rejesta ya dawa';
+
+  @override
   String get contacted => 'Amewasiliana';
 
   @override
@@ -1051,4 +1072,182 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get yesterday => 'Jana';
+
+  @override
+  String get backendOfflineTitle => 'Unatumia taarifa zilizohifadhiwa';
+
+  @override
+  String get backendOfflineMessage =>
+      'Huduma za backend hazijaunganishwa bado. Ripoti za ndani bado zinapatikana.';
+
+  @override
+  String get backendConnectedTitle => 'Imeunganishwa na huduma za afya';
+
+  @override
+  String get backendConnectedMessage =>
+      'Ripoti, ufuatiliaji, dawa, na arifa zinaweza kusawazishwa hapa.';
+
+  @override
+  String get completeCareProfile => 'Kamilisha wasifu wa huduma';
+
+  @override
+  String get completeCareProfileSubtitle =>
+      'Ongeza taarifa za afya na eneo ukiwa tayari ili rufaa na ufuatiliaji zifanye kazi vizuri.';
+
+  @override
+  String get careReports => 'Ripoti';
+
+  @override
+  String get careFollowUps => 'Ufuatiliaji';
+
+  @override
+  String get carePrescriptions => 'Maagizo ya dawa';
+
+  @override
+  String get careAlerts => 'Arifa';
+
+  @override
+  String get noFollowUpsYet => 'Hakuna ufuatiliaji uliopangwa bado.';
+
+  @override
+  String get noPrescriptionsYet =>
+      'Hakuna maagizo ya dawa yaliyoshirikiwa bado.';
+
+  @override
+  String get noAlertsYet => 'Hakuna arifa kwa sasa.';
+
+  @override
+  String get verifiedFacility => 'Kituo kilichothibitishwa';
+
+  @override
+  String get verifiedReferralSource =>
+      'Chaguo za rufaa zinatoka kwenye orodha ya vituo vilivyothibitishwa na REPAIR-AI.';
+
+  @override
+  String get nearbyVerifiedFacilities =>
+      'Vituo vilivyothibitishwa vilivyo karibu';
+
+  @override
+  String get noVerifiedNearbyFacilities =>
+      'Hakuna kituo kilichothibitishwa kilichopatikana karibu. Jaribu utafutaji wa kaunti au wasiliana na msaada.';
+
+  @override
+  String get locationOffFacilityFallback =>
+      'Eneo limezimwa. Bado tunaweza kuonyesha vituo vilivyothibitishwa katika kaunti yako.';
+
+  @override
+  String get facilitiesLoadError =>
+      'Vituo havikuweza kupakiwa. Angalia muunganisho na ujaribu tena.';
+
+  @override
+  String get showingCurrentLocationFacilities =>
+      'Inaonyesha vituo vilivyothibitishwa karibu na eneo lako la sasa.';
+
+  @override
+  String get mapDataAttribution => '© wachangiaji wa OpenStreetMap';
+
+  @override
+  String get aiScreeningReferralChecked =>
+      'Uchunguzi wa AI umekagua dalili zako na hitaji la rufaa.';
+
+  @override
+  String get localScreeningReferralGuidance =>
+      'Uchunguzi wa hatari umekagua dalili zako. Mwongozo wa rufaa unategemea kanuni za sasa za usalama.';
+
+  @override
+  String get findVerifiedCareNow => 'Tafuta huduma iliyothibitishwa sasa';
+
+  @override
+  String get viewVerifiedCareOptions =>
+      'Angalia chaguo za huduma zilizothibitishwa';
+
+  @override
+  String get nearbyMapResults => 'Matokeo ya ramani yaliyo karibu';
+
+  @override
+  String get unverifiedMapResult =>
+      'Tokeo la ramani, halijathibitishwa kitabibu';
+
+  @override
+  String get mapResultsNotClinical =>
+      'Matokeo haya ya ziada yanatoka OpenStreetMap. Tumia vituo vilivyothibitishwa kwa maamuzi ya rufaa.';
+
+  @override
+  String get verifiedCareNearYou => 'Huduma iliyothibitishwa karibu nawe';
+
+  @override
+  String verifiedFacilitiesCount(int count) =>
+      'Vituo vilivyothibitishwa: $count';
+
+  @override
+  String mapResultsCount(int count) => 'Matokeo ya ramani: $count';
+
+  @override
+  String get viewMoreMapResults => 'Onyesha matokeo zaidi ya ramani';
+
+  @override
+  String get showFewerMapResults => 'Onyesha matokeo machache';
+
+  @override
+  String get submitForAiRiskScreening => 'Tuma kwa uchunguzi wa hatari wa AI';
+
+  @override
+  String get reviewForAiScreening => 'Hakiki kwa uchunguzi wa AI';
+
+  @override
+  String get runAiRiskScreening => 'Anzisha uchunguzi wa hatari wa AI';
+
+  @override
+  String get aiAssistedScreening => 'Uchunguzi uliosaidiwa na AI';
+
+  @override
+  String get localSafetyScreening => 'Uchunguzi wa usalama wa ndani';
+
+  @override
+  String get useLocalSafetyScreening => 'Tumia uchunguzi wa usalama wa ndani';
+
+  @override
+  String get aiServiceUnavailable =>
+      'Uchunguzi wa AI haupatikani sasa. Unaweza kujaribu tena au kutumia uchunguzi wa usalama wa ndani.';
+
+  @override
+  String get patientProfileRequiredForAi =>
+      'Tafadhali ingia na ukamilishe wasifu wako wa huduma kabla ya uchunguzi wa AI.';
+
+  @override
+  String get symptomStrengthQuestion => 'Dalili zina nguvu kiasi gani?';
+
+  @override
+  String get symptomStartQuestion => 'Hili lilianza lini?';
+
+  @override
+  String get screeningSafetyCopy =>
+      'Uchunguzi si utambuzi wa ugonjwa. Tafuta huduma ikiwa dalili ni kali au zinazidi.';
+
+  @override
+  String get ancSpecialCases => 'Hali maalum za ANC';
+
+  @override
+  String get ancSpecialCasesSubtitle =>
+      'Rh, upungufu wa damu, BP, maambukizi, na hatua inayofuata ya ANC';
+
+  @override
+  String get ancProfileEmpty =>
+      'Hakuna wasifu wa hali maalum za ANC uliorekodiwa bado.';
+
+  @override
+  String get ancProfileRecordedByCareTeam =>
+      'Imerekodiwa na timu yako ya huduma. Itumie kuuliza maswali wazi wakati wa ANC.';
+
+  @override
+  String get askProviderToUpdateAnc =>
+      'Muombe mtoa huduma au CHP aisasishe baada ya ukaguzi wako ujao wa ANC.';
+
+  @override
+  String get ancContextForReferral =>
+      'Taarifa za ANC zinazoweza kusaidia kupanga rufaa';
+
+  @override
+  String get ancContextForRisk =>
+      'Taarifa za ANC zilizozingatiwa pamoja na uchunguzi huu';
 }

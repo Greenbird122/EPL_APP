@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/shared/widgets/hero_image_stack.dart';
 import 'package:repair_ai/shared/widgets/language_toggle.dart';
@@ -67,11 +68,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final onboardingData = _onboardingData(l10n);
-    final size = MediaQuery.of(context).size;
     final current = onboardingData[currentPage];
     final itemColor = current['color'] as Color;
     final imageAsset = current['image'] as String;
-    final foregroundHeight = (size.height * 0.28).clamp(160.0, 260.0);
+    final compact = RepairBreakpoints.isCompactPhone(context);
+    final short = RepairBreakpoints.isShortScreen(context);
 
     return Scaffold(
       body: Stack(
@@ -121,7 +122,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     itemBuilder: (context, index) {
                       final data = onboardingData[index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 18 : 24,
+                        ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -129,26 +132,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               asset: data['image'] as String,
                               accent: data['color'] as Color,
                               fallbackIcon: data['fallbackIcon'] as IconData,
-                              height: foregroundHeight,
                             ),
-                            const SizedBox(height: 28),
+                            SizedBox(height: short ? 18 : 28),
                             Text(
                               data['title'] as String,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 28,
+                              style: TextStyle(
+                                fontSize: compact ? 24 : 28,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
                                 height: 1.15,
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: short ? 8 : 12),
                             Text(
                               data['description'] as String,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 16,
-                                height: 1.5,
+                                fontSize: compact ? 14 : 16,
+                                height: 1.42,
                                 color: Colors.white.withValues(alpha: 0.75),
                               ),
                             ),
@@ -170,7 +172,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                  padding: EdgeInsets.fromLTRB(
+                    compact ? 18 : 24,
+                    8,
+                    compact ? 18 : 24,
+                    short ? 20 : 32,
+                  ),
                   child: Column(
                     children: [
                       SmoothPageIndicator(
@@ -252,21 +259,21 @@ class _SharpForegroundImage extends StatelessWidget {
     required this.asset,
     required this.accent,
     required this.fallbackIcon,
-    required this.height,
   });
 
   final String asset;
   final Color accent;
   final IconData fallbackIcon;
-  final double height;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width * 0.72;
+    final size = MediaQuery.sizeOf(context);
+    final widthCap = size.height < 700 ? size.width * 0.58 : size.width * 0.72;
+    final side = widthCap.clamp(190.0, 420.0).toDouble();
 
     return Container(
-      width: width,
-      height: height,
+      width: side,
+      height: side,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: [

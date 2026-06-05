@@ -15,6 +15,8 @@ class RecoverAccountScreen extends StatefulWidget {
 class _RecoverAccountScreenState extends State<RecoverAccountScreen> {
   final _controller = TextEditingController(text: '+254');
   bool _isSending = false;
+  String? _statusMessage;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -24,18 +26,19 @@ class _RecoverAccountScreenState extends State<RecoverAccountScreen> {
 
   Future<void> _sendRecovery() async {
     if (_controller.text.trim().length < 6) {
-      showAppErrorSnackBar(context, 'Enter your phone or email.');
+      const message = 'Enter your phone or email.';
+      setState(() => _errorMessage = message);
+      showAppErrorSnackBar(context, message);
       return;
     }
-    setState(() => _isSending = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() => _isSending = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recovery instructions queued.'),
-      ),
-    );
+    const message =
+        'Password reset is not available on this backend yet. Please use the web dashboard or contact support.';
+    setState(() {
+      _isSending = false;
+      _statusMessage = null;
+      _errorMessage = message;
+    });
+    showAppErrorSnackBar(context, message);
   }
 
   @override
@@ -46,6 +49,10 @@ class _RecoverAccountScreenState extends State<RecoverAccountScreen> {
       title: l10n.recoverAccountTitle,
       subtitle: l10n.recoverAccountSubtitle,
       showBack: true,
+      errorMessage: _errorMessage,
+      statusMessage: _statusMessage,
+      isLoading: _isSending,
+      onDismissError: () => setState(() => _errorMessage = null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

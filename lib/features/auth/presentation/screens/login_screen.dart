@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
-import 'package:repair_ai/core/utils/async_guard.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
-import 'package:repair_ai/features/auth/presentation/controllers/login_profile_providers.dart';
+import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_shell.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -20,49 +19,58 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController(text: '+254');
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _usePhone = true;
+  bool _usePhone = false;
   bool _obscurePassword = true;
   bool _isSubmitting = false;
+  bool _rememberMe = true;
+  String? _errorMessage;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _signInWithEmail() async {
+  Future<void> _signInWithPassword() async {
     final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
 
-    final ok = await runWithTimeout(
-      () async {
-        await Future<void>.delayed(const Duration(milliseconds: 700));
-        ref.read(profileFormDataProvider.notifier).state = ProfileFormData(
-          name: 'Mother User',
-          email: _emailController.text.trim(),
-        );
-        await ref.read(onboardingCompleteProvider.notifier).markComplete();
-        await AuthSessionNotifier.acceptTerms();
-        await ref.read(authSessionProvider.notifier).signIn(
-              status: AuthSessionStatus.mother,
-            );
-        return true;
-      },
-      timeout: const Duration(seconds: 12),
-    );
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    if (ok != true) {
-      showAppErrorSnackBar(context, l10n.timeoutError);
-      return;
+    try {
+      final session =
+          await ref.read(authSessionProvider.notifier).signInWithBackend(
+                username: _usernameController.text.trim(),
+                password: _passwordController.text,
+                rememberMe: _rememberMe,
+              );
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      context
+          .go(session.isProvider ? '/dashboard/provider' : '/login/transition');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      final message = friendlyAuthError(error);
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = message;
+      });
+      showAppErrorSnackBar(context, message);
+    } catch (error) {
+      if (!mounted) return;
+      final message = friendlyAuthError(error, fallback: l10n.timeoutError);
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = message;
+      });
+      showAppErrorSnackBar(context, message);
     }
-    context.go('/login/transition');
   }
 
   void _continuePhoneOtp() {
@@ -81,30 +89,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       title: l10n.signInTitle,
       subtitle: l10n.signInSubtitle,
       showBack: true,
+      errorMessage: _errorMessage,
+      statusMessage: _isSubmitting ? 'Signing you in securely...' : null,
+      isLoading: _isSubmitting,
+      onDismissError: () => setState(() => _errorMessage = null),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(
-                  value: true,
-                  icon: const Icon(Icons.phone_android),
-                  label: Text(l10n.phoneOtpLabel),
-                ),
-                ButtonSegment(
-                  value: false,
-                  icon: const Icon(Icons.mail_outline),
-                  label: Text(l10n.emailLabel),
-                ),
-              ],
-              selected: {_usePhone},
-              onSelectionChanged: (value) =>
-                  setState(() => _usePhone = value.first),
-            ),
-            const SizedBox(height: 14),
             if (_usePhone) ...[
+              AuthStatusBanner(
+                message:
+                    'Phone OTP is not connected to the backend yet. Use username and password for now.',
+                tone: AuthStatusTone.warning,
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -114,6 +114,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+              CheckboxListTile(
+                value: _rememberMe,
+                onChanged: _isSubmitting
+                    ? null
+                    : (value) => setState(() => _rememberMe = value ?? true),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Remember me'),
+                subtitle: const Text('Keep me signed in on this device.'),
+              ),
+              const SizedBox(height: 8),
               ElevatedButton.icon(
                 onPressed: _isSubmitting ? null : _continuePhoneOtp,
                 icon: const Icon(Icons.sms),
@@ -125,17 +136,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ] else ...[
               TextFormField(
-                controller: _emailController,
+                controller: _usernameController,
                 decoration: InputDecoration(
-                  labelText: l10n.email,
-                  prefixIcon: const Icon(Icons.email_outlined),
+                  labelText: 'Username',
+                  helperText: 'Use your username, not your email address.',
+                  prefixIcon: const Icon(Icons.alternate_email),
                 ),
-                keyboardType: TextInputType.emailAddress,
+                keyboardType: TextInputType.text,
                 validator: (v) {
                   final value = (v ?? '').trim();
-                  if (value.isEmpty) return l10n.emailRequired;
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
-                    return l10n.emailInvalid;
+                  if (value.isEmpty) {
+                    return 'Username is required';
+                  }
+                  if (value.contains(' ')) {
+                    return 'Username cannot contain spaces';
+                  }
+                  if (value.contains('@')) {
+                    return 'Use your username, not email. Email login is not supported by this backend yet.';
                   }
                   return null;
                 },
@@ -161,14 +178,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 validator: (v) {
                   final value = v ?? '';
                   if (value.isEmpty) return l10n.passwordRequired;
-                  if (value.length < 6) return l10n.passwordMinLength;
                   return null;
                 },
-                onFieldSubmitted: (_) => _signInWithEmail(),
+                onFieldSubmitted: (_) => _signInWithPassword(),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _signInWithEmail,
+                onPressed: _isSubmitting ? null : _signInWithPassword,
                 icon: _isSubmitting
                     ? const SizedBox(
                         width: 18,
@@ -187,6 +203,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ],
             const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: _isSubmitting
+                  ? null
+                  : () => setState(() {
+                        _usePhone = !_usePhone;
+                        _errorMessage = null;
+                      }),
+              icon: Icon(_usePhone ? Icons.lock_outline : Icons.phone_android),
+              label: Text(
+                _usePhone ? 'Use username and password' : 'Use phone OTP later',
+              ),
+            ),
             TextButton(
               onPressed: () => context.push('/auth/recover'),
               child: Text(l10n.forgotPassword),

@@ -9,22 +9,6 @@ enum ReferralUiStatus {
   cancelled,
 }
 
-class FacilityOption {
-  const FacilityOption({
-    required this.name,
-    required this.distance,
-    required this.eta,
-    required this.capabilities,
-    this.isRecommended = false,
-  });
-
-  final String name;
-  final String distance;
-  final String eta;
-  final List<String> capabilities;
-  final bool isRecommended;
-}
-
 class ReferralState {
   const ReferralState({
     this.status = ReferralUiStatus.recommended,
@@ -76,25 +60,3 @@ final referralStateProvider =
     StateNotifierProvider<ReferralStateNotifier, ReferralState>((ref) {
   return ReferralStateNotifier();
 });
-
-const facilityOptions = [
-  FacilityOption(
-    name: 'Bungoma County Referral Hospital',
-    distance: '12.4 km',
-    eta: '28 min',
-    capabilities: ['24/7', 'Ultrasound', 'Blood bank'],
-    isRecommended: true,
-  ),
-  FacilityOption(
-    name: 'Webuye County Hospital',
-    distance: '18.7 km',
-    eta: '45 min',
-    capabilities: ['Maternity', 'Lab', 'Ambulance'],
-  ),
-  FacilityOption(
-    name: 'Kimilili Sub-County Hospital',
-    distance: '23.1 km',
-    eta: '52 min',
-    capabilities: ['Maternity', 'Pharmacy', 'CHP desk'],
-  ),
-];

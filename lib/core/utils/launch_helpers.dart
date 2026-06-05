@@ -3,7 +3,6 @@ import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const kEmergencyPhone = '999';
-const kFacilityMapsQuery = 'Bungoma+County+Referral+Hospital';
 const kRepairAiUssdCode = '*384#';
 
 Future<void> launchEmergencyCall() async {
@@ -13,10 +12,28 @@ Future<void> launchEmergencyCall() async {
   }
 }
 
-Future<void> launchFacilityMaps() async {
-  final uri = Uri.parse(
-    'https://www.google.com/maps/search/?api=1&query=$kFacilityMapsQuery',
-  );
+Future<void> launchPhoneNumber(String phoneNumber) async {
+  final normalized = phoneNumber.replaceAll(RegExp(r'\s+'), '');
+  final uri = Uri.parse('tel:$normalized');
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+  }
+}
+
+Future<void> launchFacilityDirections({
+  required double latitude,
+  required double longitude,
+  double? fromLatitude,
+  double? fromLongitude,
+}) async {
+  final encodedDestination = '$latitude,$longitude';
+  final uri = fromLatitude != null && fromLongitude != null
+      ? Uri.parse(
+          'https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=$fromLatitude%2C$fromLongitude%3B$encodedDestination',
+        )
+      : Uri.parse(
+          'https://www.openstreetmap.org/?mlat=$latitude&mlon=$longitude#map=15/$latitude/$longitude',
+        );
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 

@@ -8,6 +8,7 @@ import 'localization/app_localizations.dart';
 import 'localization/l10n/app_localizations_delegate.dart';
 import 'core/config/theme_mode_provider.dart';
 import 'features/auth/presentation/controllers/language_providers.dart';
+import 'shared/widgets/backend_connection_listener.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,15 @@ class RepairAIApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: ref.watch(appRouterProvider),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const BackendConnectionListener(),
+            const BackendConnectionBar(),
+          ],
+        );
+      },
     );
   }
 }

@@ -105,6 +105,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get triage => 'Triage';
 
   @override
+  String get careTab => 'Care';
+
+  @override
   String get profile => 'Profile';
 
   @override
@@ -276,7 +279,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get referralSuccessMessage =>
-      'Bungoma County Referral Hospital has been notified.';
+      'The selected verified facility has been notified.';
 
   @override
   String get viewHistory => 'View history';
@@ -620,7 +623,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Community support groups coming soon. Use WhatsApp for help now.';
 
   @override
-  String get referralHospitalName => 'Bungoma County Referral Hospital';
+  String get referralHospitalName => 'Selected verified facility';
 
   @override
   String get facilityChip247 => '24/7';
@@ -663,11 +666,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageChangedSw => 'Language changed to Kiswahili';
 
   @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get changePasswordSubtitle => 'Update your backend account password';
+
+  @override
   String get whatsAppMessage =>
       'Hello REPAIR-AI, I need help with my pregnancy.';
 
   @override
   String get nearestFacilitySubtitle => 'Bungoma County Hospital • 2.3 km';
+
+  @override
+  String get medicationTrackerTitle => 'Treatment & supplement tracker';
+
+  @override
+  String get medicationTrackerSubtitle =>
+      'Track tablets issued and remaining by date';
 
   @override
   String get chooseAccessSubtitle =>
@@ -883,7 +899,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get facilityReadyFindCare =>
-      'Bungoma County Referral Hospital is ready in Find Care.';
+      'Your selected verified facility is ready in Find Care.';
 
   @override
   String get referralDrafted => 'Referral drafted';
@@ -1035,6 +1051,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markContacted => 'Mark contacted';
 
   @override
+  String get drugRegistry => 'Drug registry';
+
+  @override
   String get contacted => 'Contacted';
 
   @override
@@ -1048,4 +1067,177 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yesterday => 'Yesterday';
+
+  @override
+  String get backendOfflineTitle => 'Using saved care data';
+
+  @override
+  String get backendOfflineMessage =>
+      'Backend services are not connected yet. Local reports remain available.';
+
+  @override
+  String get backendConnectedTitle => 'Connected to care services';
+
+  @override
+  String get backendConnectedMessage =>
+      'Reports, follow-ups, prescriptions, and alerts can sync here.';
+
+  @override
+  String get completeCareProfile => 'Complete care profile';
+
+  @override
+  String get completeCareProfileSubtitle =>
+      'Add health and location details when ready so referrals and follow-ups work better.';
+
+  @override
+  String get careReports => 'Reports';
+
+  @override
+  String get careFollowUps => 'Follow-ups';
+
+  @override
+  String get carePrescriptions => 'Prescriptions';
+
+  @override
+  String get careAlerts => 'Alerts';
+
+  @override
+  String get noFollowUpsYet => 'No follow-ups are scheduled yet.';
+
+  @override
+  String get noPrescriptionsYet => 'No prescriptions have been shared yet.';
+
+  @override
+  String get noAlertsYet => 'No alerts right now.';
+
+  @override
+  String get verifiedFacility => 'Verified facility';
+
+  @override
+  String get verifiedReferralSource =>
+      'Referral options come from the verified REPAIR-AI facility registry.';
+
+  @override
+  String get nearbyVerifiedFacilities => 'Nearby verified facilities';
+
+  @override
+  String get noVerifiedNearbyFacilities =>
+      'No verified nearby facilities found. Try county search or contact support.';
+
+  @override
+  String get locationOffFacilityFallback =>
+      'Location is off. We can still show verified facilities from your county.';
+
+  @override
+  String get facilitiesLoadError =>
+      'Facilities could not be loaded. Check connection and try again.';
+
+  @override
+  String get showingCurrentLocationFacilities =>
+      'Showing verified facilities near your current location.';
+
+  @override
+  String get mapDataAttribution => '© OpenStreetMap contributors';
+
+  @override
+  String get aiScreeningReferralChecked =>
+      'AI screening has checked your symptoms and referral need.';
+
+  @override
+  String get localScreeningReferralGuidance =>
+      'Risk screening has checked your symptoms. Referral guidance is based on the current safety rules.';
+
+  @override
+  String get findVerifiedCareNow => 'Find verified care now';
+
+  @override
+  String get viewVerifiedCareOptions => 'View verified care options';
+
+  @override
+  String get nearbyMapResults => 'Nearby map results';
+
+  @override
+  String get unverifiedMapResult => 'Map result, not clinically verified';
+
+  @override
+  String get mapResultsNotClinical =>
+      'These extra map results come from OpenStreetMap. Use verified facilities for clinical referral decisions.';
+
+  @override
+  String get verifiedCareNearYou => 'Verified care near you';
+
+  @override
+  String verifiedFacilitiesCount(int count) => 'Verified facilities: $count';
+
+  @override
+  String mapResultsCount(int count) => 'Map results: $count';
+
+  @override
+  String get viewMoreMapResults => 'View more map results';
+
+  @override
+  String get showFewerMapResults => 'Show fewer map results';
+
+  @override
+  String get submitForAiRiskScreening => 'Submit for AI risk screening';
+
+  @override
+  String get reviewForAiScreening => 'Review for AI screening';
+
+  @override
+  String get runAiRiskScreening => 'Run AI risk screening';
+
+  @override
+  String get aiAssistedScreening => 'AI-assisted screening';
+
+  @override
+  String get localSafetyScreening => 'Local safety screening';
+
+  @override
+  String get useLocalSafetyScreening => 'Use local safety screening';
+
+  @override
+  String get aiServiceUnavailable =>
+      'Backend AI screening is unavailable. You can try again or use local safety screening.';
+
+  @override
+  String get patientProfileRequiredForAi =>
+      'Please sign in and complete your care profile before backend AI screening.';
+
+  @override
+  String get symptomStrengthQuestion => 'How strong are the symptoms?';
+
+  @override
+  String get symptomStartQuestion => 'When did this start?';
+
+  @override
+  String get screeningSafetyCopy =>
+      'Screening is not a diagnosis. Seek care if symptoms feel severe or worsening.';
+
+  @override
+  String get ancSpecialCases => 'ANC special cases';
+
+  @override
+  String get ancSpecialCasesSubtitle =>
+      'Rh factor, anaemia, BP checks, infections, and next ANC action';
+
+  @override
+  String get ancProfileEmpty =>
+      'No ANC special-case profile has been recorded yet.';
+
+  @override
+  String get ancProfileRecordedByCareTeam =>
+      'Recorded by your care team. Use this to ask clear questions during ANC visits.';
+
+  @override
+  String get askProviderToUpdateAnc =>
+      'Ask your provider or CHP to update this after your next ANC check.';
+
+  @override
+  String get ancContextForReferral =>
+      'ANC context that may affect referral planning';
+
+  @override
+  String get ancContextForRisk =>
+      'ANC context considered alongside this screening';
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
 /// 24/7 WhatsApp support row with chat-preview visual.
@@ -12,6 +13,7 @@ class WhatsAppSupportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final compact = RepairBreakpoints.isCompactPhone(context);
 
     return Card(
       elevation: 4,
@@ -20,11 +22,11 @@ class WhatsAppSupportCard extends StatelessWidget {
         onTap: () => launchWhatsAppHelp(context),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(compact ? 12 : 14),
           child: Row(
             children: [
-              _ChatPreview(),
-              const SizedBox(width: 14),
+              _ChatPreview(size: RepairSizing.supportVisualSize(context)),
+              SizedBox(width: compact ? 10 : 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,15 +50,15 @@ class WhatsAppSupportCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(compact ? 8 : 10),
                 decoration: BoxDecoration(
                   color: _whatsAppGreen.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.chat,
                   color: _whatsAppGreen,
-                  size: 26,
+                  size: compact ? 22 : 26,
                 ),
               ),
             ],
@@ -68,11 +70,15 @@ class WhatsAppSupportCard extends StatelessWidget {
 }
 
 class _ChatPreview extends StatelessWidget {
+  const _ChatPreview({required this.size});
+
+  final double size;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
-      height: 72,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(12),
@@ -93,7 +99,7 @@ class _ChatPreview extends StatelessWidget {
               ),
               child: const Text(
                 'Hi Mama 👋',
-                style: TextStyle(fontSize: 8, color: Colors.black87),
+                style: TextStyle(fontSize: 7, color: Colors.black87),
               ),
             ),
           ),
@@ -108,7 +114,7 @@ class _ChatPreview extends StatelessWidget {
               ),
               child: const Text(
                 '24/7',
-                style: TextStyle(fontSize: 8, color: Colors.black87),
+                style: TextStyle(fontSize: 7, color: Colors.black87),
               ),
             ),
           ),

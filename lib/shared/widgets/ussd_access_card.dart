@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
 class UssdAccessCard extends StatelessWidget {
@@ -36,6 +37,8 @@ class UssdAccessCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    final narrow = MediaQuery.sizeOf(context).width < 360;
+    final iconSize = RepairSizing.supportVisualSize(context, compact: compact);
 
     return Card(
       elevation: compact ? 2 : 4,
@@ -47,8 +50,8 @@ class UssdAccessCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: compact ? 44 : 52,
-              height: compact ? 44 : 52,
+              width: iconSize,
+              height: iconSize,
               decoration: BoxDecoration(
                 color: AppTheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
@@ -84,16 +87,30 @@ class UssdAccessCard extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              onPressed: () => _copy(context),
-              icon: const Icon(Icons.copy),
-              tooltip: l10n.copyUssdCode,
-            ),
-            IconButton(
-              onPressed: () => _dial(context),
-              icon: const Icon(Icons.phone),
-              tooltip: l10n.dialUssd,
-            ),
+            if (narrow)
+              PopupMenuButton<String>(
+                tooltip: l10n.quickActions,
+                onSelected: (value) {
+                  if (value == 'copy') _copy(context);
+                  if (value == 'dial') _dial(context);
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(value: 'copy', child: Text(l10n.copyUssdCode)),
+                  PopupMenuItem(value: 'dial', child: Text(l10n.dialUssd)),
+                ],
+              )
+            else ...[
+              IconButton(
+                onPressed: () => _copy(context),
+                icon: const Icon(Icons.copy),
+                tooltip: l10n.copyUssdCode,
+              ),
+              IconButton(
+                onPressed: () => _dial(context),
+                icon: const Icon(Icons.phone),
+                tooltip: l10n.dialUssd,
+              ),
+            ],
           ],
         ),
       ),

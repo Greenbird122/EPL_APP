@@ -15,6 +15,10 @@ class AppBottomNav extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       selectedItemColor: AppTheme.primary,
       unselectedItemColor: Colors.grey,
+      selectedFontSize: 11,
+      unselectedFontSize: 11,
+      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
       currentIndex: currentIndex,
       onTap: (index) {
         switch (index) {
@@ -25,9 +29,12 @@ class AppBottomNav extends StatelessWidget {
             context.go('/triage/symptom-report');
             break;
           case 2:
-            context.go('/referral');
+            context.go('/care');
             break;
           case 3:
+            context.go('/referral');
+            break;
+          case 4:
             context.go('/profile');
             break;
         }
@@ -37,6 +44,10 @@ class AppBottomNav extends StatelessWidget {
         BottomNavigationBarItem(
           icon: const Icon(Icons.medical_services),
           label: l10n.triage,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.favorite_border),
+          label: l10n.careTab,
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.map_outlined),

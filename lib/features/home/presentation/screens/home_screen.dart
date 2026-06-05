@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
 import 'package:repair_ai/features/care_journey/presentation/controllers/care_journey_provider.dart';
 import 'package:repair_ai/features/care_journey/presentation/widgets/care_support_block.dart';
@@ -16,6 +17,7 @@ import 'package:repair_ai/shared/widgets/hero_image_stack.dart';
 import 'package:repair_ai/shared/widgets/image_accent_card.dart';
 import 'package:repair_ai/shared/widgets/language_toggle.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
+import 'package:repair_ai/shared/widgets/responsive_page.dart';
 import 'package:repair_ai/shared/widgets/theme_mode_toggle.dart';
 import 'package:repair_ai/shared/widgets/ussd_access_card.dart';
 import 'package:repair_ai/shared/widgets/whatsapp_support_card.dart';
@@ -44,151 +46,161 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 88),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            HomeHeroBanner(
-              imageAsset: 'assets/illustrations/mother_2.jpg',
-              topChild: Chip(
-                avatar: const Icon(
-                  Icons.cloud_off,
-                  size: 16,
-                  color: Colors.white,
+        padding: EdgeInsets.only(bottom: RepairInsets.scrollBottom(context)),
+        child: ResponsivePageShell(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              HomeHeroBanner(
+                imageAsset: 'assets/illustrations/mother_2.jpg',
+                topChild: _OfflineChip(label: l10n.worksOffline),
+                bottomChild: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.yourPregnancyMatters,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${l10n.reportSymptomsEarly} ${l10n.homeSupportChannelsSuffix}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
                 ),
-                label: Text(
-                  l10n.worksOffline,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: DemoDisclaimerBanner(compact: true),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TodayCareCard(
+                  latestReport: lastReport,
+                  referral: referral,
+                  followUpStatus: followUpStatus,
+                  onPrimaryAction: () => lastReport == null
+                      ? context.push('/triage/symptom-report')
+                      : context.push('/referral'),
+                  onSecondaryAction: () => lastReport == null
+                      ? launchUssdCode()
+                      : context.push('/history'),
                 ),
-                backgroundColor: Colors.white24,
               ),
-              bottomChild: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.yourPregnancyMatters,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: CareTimeline(
+                  latestReport: lastReport,
+                  referral: referral,
+                  followUpStatus: followUpStatus,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _ReportSymptomsCard(
+                  title: l10n.reportSymptoms,
+                  subtitle: l10n.reportSymptomsSubtitle,
+                  onTap: () => context.push('/triage/symptom-report'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: WhatsAppSupportCard(),
+              ),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: UssdAccessCard(),
+              ),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: CareSupportBlock(compact: true),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    _CompactNavCard(
+                      title: l10n.careTab,
+                      subtitle:
+                          '${l10n.careReports} • ${l10n.careFollowUps} • ${l10n.carePrescriptions}',
+                      icon: Icons.favorite_border,
+                      onTap: () => context.push('/care'),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${l10n.reportSymptomsEarly} ${l10n.homeSupportChannelsSuffix}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.white70,
+                    const SizedBox(height: 12),
+                    _CompactNavCard(
+                      title: l10n.mentalHealthSupport,
+                      subtitle: l10n.mentalHealthSubtitle,
+                      icon: Icons.psychology,
+                      onTap: () => context.push('/mental-health'),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: DemoDisclaimerBanner(compact: true),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TodayCareCard(
-                latestReport: lastReport,
-                referral: referral,
-                followUpStatus: followUpStatus,
-                onPrimaryAction: () => lastReport == null
-                    ? context.push('/triage/symptom-report')
-                    : context.push('/referral'),
-                onSecondaryAction: () => lastReport == null
-                    ? launchUssdCode()
-                    : context.push('/history'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CareTimeline(
-                latestReport: lastReport,
-                referral: referral,
-                followUpStatus: followUpStatus,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _ReportSymptomsCard(
-                title: l10n.reportSymptoms,
-                subtitle: l10n.reportSymptomsSubtitle,
-                onTap: () => context.push('/triage/symptom-report'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _HomeActionCard(
-                      title: l10n.myReports,
-                      subtitle: l10n.myReportsSubtitle,
-                      icon: Icons.history,
-                      color: Colors.teal,
-                      onTap: () => context.push('/history'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _HomeActionCard(
-                      title: l10n.myReferrals,
-                      subtitle: l10n.myReferralsSubtitle,
-                      icon: Icons.local_hospital_rounded,
-                      color: AppTheme.primary,
+                    const SizedBox(height: 12),
+                    _CompactNavCard(
+                      title: l10n.nearestFacility,
+                      subtitle: l10n.nearestFacilitySubtitle,
+                      icon: Icons.local_hospital,
                       onTap: () => context.push('/referral'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: WhatsAppSupportCard(),
-            ),
-            const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: UssdAccessCard(),
-            ),
-            const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: CareSupportBlock(compact: true),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  _CompactNavCard(
-                    title: l10n.mentalHealthSupport,
-                    subtitle: l10n.mentalHealthSubtitle,
-                    icon: Icons.psychology,
-                    onTap: () => context.push('/mental-health'),
-                  ),
-                  const SizedBox(height: 12),
-                  _CompactNavCard(
-                    title: l10n.nearestFacility,
-                    subtitle: l10n.nearestFacilitySubtitle,
-                    icon: Icons.local_hospital,
-                    onTap: () => context.push('/referral'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
+    );
+  }
+}
+
+class _OfflineChip extends StatelessWidget {
+  const _OfflineChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final foreground = isDark ? Colors.white : AppTheme.primary;
+    final background = isDark
+        ? AppTheme.primary.withValues(alpha: 0.62)
+        : Colors.white.withValues(alpha: 0.88);
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Chip(
+        avatar: Icon(
+          Icons.cloud_off,
+          size: 16,
+          color: foreground,
+        ),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        backgroundColor: background,
+        side: BorderSide(
+          color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.62),
+        ),
+      ),
     );
   }
 }
@@ -255,57 +267,6 @@ class _ReportSymptomsCard extends StatelessWidget {
   }
 }
 
-class _HomeActionCard extends StatelessWidget {
-  const _HomeActionCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ImageAccentCard(
-      imageAsset: icon == Icons.history
-          ? 'assets/illustrations/mother_2.jpg'
-          : 'assets/illustrations/hospital.jpg',
-      accentColor: color,
-      imageWidth: 58,
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 36, color: color),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CompactNavCard extends StatelessWidget {
   const _CompactNavCard({
     required this.title,
@@ -322,17 +283,28 @@ class _CompactNavCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ImageAccentCard(
-      imageAsset: icon == Icons.psychology
-          ? 'assets/illustrations/mental_health.jpg'
-          : 'assets/illustrations/hospital.jpg',
+      imageAsset: switch (icon) {
+        Icons.psychology => 'assets/illustrations/mental_health.jpg',
+        Icons.favorite_border => 'assets/illustrations/mama.jpeg',
+        _ => 'assets/illustrations/hospital.jpg',
+      },
       accentColor: AppTheme.primary,
       imageWidth: 72,
       onTap: onTap,
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         leading: Icon(icon, size: 36, color: AppTheme.primary),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         trailing: const Icon(Icons.chevron_right),
       ),
     );

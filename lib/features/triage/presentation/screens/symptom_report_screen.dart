@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
 import 'package:repair_ai/features/triage/domain/symptom_catalog.dart';
@@ -13,6 +14,7 @@ import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/repair_buttons.dart';
 import 'package:repair_ai/shared/widgets/repair_card.dart';
+import 'package:repair_ai/shared/widgets/responsive_page.dart';
 
 class SymptomReportScreen extends ConsumerStatefulWidget {
   const SymptomReportScreen({super.key});
@@ -117,9 +119,9 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Review symptom report',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              l10n.reviewForAiScreening,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Text(
@@ -137,13 +139,13 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
               Text(_notesController.text.trim()),
             ],
             const SizedBox(height: 16),
-            const Text(
-              'This is a risk screening, not a diagnosis. Seek urgent care if symptoms feel severe or worsening.',
-              style: TextStyle(fontSize: 13, height: 1.4),
+            Text(
+              l10n.screeningSafetyCopy,
+              style: const TextStyle(fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 18),
             RepairPrimaryButton(
-              label: 'Submit for risk screening',
+              label: l10n.runAiRiskScreening,
               icon: Icons.fact_check,
               onPressed: () {
                 Navigator.of(ctx).pop();
@@ -179,272 +181,298 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final trimester = TriageRules.trimesterLabel(gestationalAge, l10n);
+    final compact = RepairBreakpoints.isCompactPhone(context);
+    final pageInsets = RepairInsets.page(context);
 
     return Scaffold(
       appBar: RepairAppBar(
         title: l10n.reportSymptomsTitle,
-        showDemoChip: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const DemoDisclaimerBanner(compact: true),
-              const SizedBox(height: 16),
-              RepairCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.weeksPregnant,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Slider(
-                      value: gestationalAge,
-                      min: 4,
-                      max: 40,
-                      divisions: 72,
-                      label:
-                          '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
-                      onChanged: (value) =>
-                          setState(() => gestationalAge = value),
-                    ),
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                          Text(
-                            trimester,
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              RepairCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'How strong are the symptoms?',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'mild', label: Text('Mild')),
-                        ButtonSegment(
-                          value: 'moderate',
-                          label: Text('Moderate'),
-                        ),
-                        ButtonSegment(value: 'severe', label: Text('Severe')),
-                      ],
-                      selected: {severity},
-                      onSelectionChanged: (value) =>
-                          setState(() => severity = value.first),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'When did this start?',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _ChoiceChip(
-                          label: 'Today',
-                          selected: duration == 'today',
-                          onTap: () => setState(() => duration = 'today'),
-                        ),
-                        _ChoiceChip(
-                          label: '1-2 days',
-                          selected: duration == 'two_days',
-                          onTap: () => setState(() => duration = 'two_days'),
-                        ),
-                        _ChoiceChip(
-                          label: '3+ days',
-                          selected: duration == 'three_plus',
-                          onTap: () => setState(() => duration = 'three_plus'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Text(
-                    l10n.selectSymptoms,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (selectedSymptoms.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    CircleAvatar(
-                      radius: 12,
-                      backgroundColor: AppTheme.primary,
-                      child: Text(
-                        '${selectedSymptoms.length}',
+          padding:
+              pageInsets.copyWith(bottom: RepairInsets.scrollBottom(context)),
+          child: ResponsivePageShell(
+            maxWidth: RepairSizing.formMaxWidth(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const DemoDisclaimerBanner(compact: true),
+                SizedBox(height: compact ? 12 : 16),
+                RepairCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.weeksPregnant,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.85,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: SymptomCatalog.canonicalKeys.length,
-                itemBuilder: (context, index) {
-                  final symptom = SymptomCatalog.canonicalKeys[index];
-                  final isSelected = selectedSymptoms.contains(symptom);
-
-                  return AnimatedScale(
-                    scale: isSelected ? 1.02 : 1.0,
-                    duration: const Duration(milliseconds: 150),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          if (isSelected) {
-                            selectedSymptoms.remove(symptom);
-                          } else {
-                            selectedSymptoms.add(symptom);
-                          }
-                        });
-                      },
-                      child: Card(
-                        elevation: isSelected ? 8 : 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppTheme.primary
-                                : Colors.grey.shade300,
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
+                      Slider(
+                        value: gestationalAge,
+                        min: 4,
+                        max: 40,
+                        divisions: 72,
+                        label:
+                            '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
+                        onChanged: (value) =>
+                            setState(() => gestationalAge = value),
+                      ),
+                      Center(
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              SymptomCatalog.iconFor(symptom),
-                              size: 30,
-                              color: isSelected
-                                  ? AppTheme.primary
-                                  : Colors.grey[700],
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 6),
-                              child: Text(
-                                SymptomCatalog.label(l10n, symptom),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected ? AppTheme.primary : null,
-                                ),
+                            Text(
+                              '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary,
                               ),
+                            ),
+                            Text(
+                              trimester,
+                              style: TextStyle(color: Colors.grey[600]),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              RepairCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.symptomNotesHint,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _notesController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: l10n.symptomNotesHint,
-                        suffixIcon: IconButton(
-                          onPressed: _toggleListen,
-                          icon: Icon(
-                            _isListening ? Icons.mic : Icons.mic_none,
-                            color: _isListening
-                                ? AppTheme.error
-                                : AppTheme.primary,
-                          ),
-                          tooltip:
-                              _isListening ? l10n.voiceStop : l10n.voiceListen,
+                    ],
+                  ),
+                ),
+                SizedBox(height: compact ? 16 : 24),
+                RepairCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.symptomStrengthQuestion,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      SizedBox(height: compact ? 8 : 12),
+                      Wrap(
+                        spacing: compact ? 6 : 8,
+                        runSpacing: compact ? 6 : 8,
+                        children: [
+                          _ChoiceChip(
+                            label: _labelFor('mild'),
+                            selected: severity == 'mild',
+                            onTap: () => setState(() => severity = 'mild'),
+                          ),
+                          _ChoiceChip(
+                            label: _labelFor('moderate'),
+                            selected: severity == 'moderate',
+                            onTap: () => setState(() => severity = 'moderate'),
+                          ),
+                          _ChoiceChip(
+                            label: _labelFor('severe'),
+                            selected: severity == 'severe',
+                            onTap: () => setState(() => severity = 'severe'),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: compact ? 12 : 16),
+                      Text(
+                        l10n.symptomStartQuestion,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: compact ? 8 : 10),
+                      Wrap(
+                        spacing: compact ? 6 : 8,
+                        runSpacing: compact ? 6 : 8,
+                        children: [
+                          _ChoiceChip(
+                            label: 'Today',
+                            selected: duration == 'today',
+                            onTap: () => setState(() => duration = 'today'),
+                          ),
+                          _ChoiceChip(
+                            label: '1-2 days',
+                            selected: duration == 'two_days',
+                            onTap: () => setState(() => duration = 'two_days'),
+                          ),
+                          _ChoiceChip(
+                            label: '3+ days',
+                            selected: duration == 'three_plus',
+                            onTap: () =>
+                                setState(() => duration = 'three_plus'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: compact ? 18 : 24),
+                Row(
+                  children: [
+                    Text(
+                      l10n.selectSymptoms,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    if (selectedSymptoms.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: AppTheme.primary,
+                        child: Text(
+                          '${selectedSymptoms.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              RepairPrimaryButton(
-                label: 'Review risk screening',
-                icon: Icons.fact_check,
-                onPressed:
-                    selectedSymptoms.isNotEmpty ? _reviewAndSubmit : null,
-              ),
-              if (selectedSymptoms.isEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  l10n.selectSymptomHint,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                SizedBox(height: compact ? 10 : 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final spacing = compact ? 8.0 : 12.0;
+                    final textScale = MediaQuery.textScalerOf(context).scale(1);
+                    final tileHeight =
+                        (compact ? 126.0 : 138.0) + (textScale - 1) * 34;
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: constraints.maxWidth >= 620 ? 3 : 2,
+                        mainAxisExtent: tileHeight.clamp(126.0, 176.0),
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                      ),
+                      itemCount: SymptomCatalog.canonicalKeys.length,
+                      itemBuilder: (context, index) {
+                        final symptom = SymptomCatalog.canonicalKeys[index];
+                        final isSelected = selectedSymptoms.contains(symptom);
+
+                        return AnimatedScale(
+                          scale: isSelected ? 1.01 : 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  selectedSymptoms.remove(symptom);
+                                } else {
+                                  selectedSymptoms.add(symptom);
+                                }
+                              });
+                            },
+                            child: Card(
+                              elevation: isSelected ? 6 : 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? AppTheme.primary
+                                      : Colors.grey.shade300,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.all(compact ? 8 : 10),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      SymptomCatalog.iconFor(symptom),
+                                      size: compact ? 22 : 28,
+                                      color: isSelected
+                                          ? AppTheme.primary
+                                          : Colors.grey[700],
+                                    ),
+                                    SizedBox(height: compact ? 6 : 8),
+                                    Text(
+                                      SymptomCatalog.label(l10n, symptom),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: compact ? 12 : 13,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: isSelected
+                                            ? AppTheme.primary
+                                            : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              ] else ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Screening uses local guidance rules and is not a diagnosis.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                SizedBox(height: compact ? 12 : 16),
+                RepairCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.symptomNotesHint,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _notesController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: l10n.symptomNotesHint,
+                          suffixIcon: IconButton(
+                            onPressed: _toggleListen,
+                            icon: Icon(
+                              _isListening ? Icons.mic : Icons.mic_none,
+                              color: _isListening
+                                  ? AppTheme.error
+                                  : AppTheme.primary,
+                            ),
+                            tooltip: _isListening
+                                ? l10n.voiceStop
+                                : l10n.voiceListen,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                SizedBox(height: compact ? 18 : 24),
+                RepairPrimaryButton(
+                  label: l10n.reviewForAiScreening,
+                  icon: Icons.fact_check,
+                  onPressed:
+                      selectedSymptoms.isNotEmpty ? _reviewAndSubmit : null,
+                ),
+                if (selectedSymptoms.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.selectSymptomHint,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.screeningSafetyCopy,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+                SizedBox(height: compact ? 12 : 24),
               ],
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

@@ -41,11 +41,14 @@ void main() {
     expect(paths, contains('/triage/analyzing'));
     expect(paths, contains('/triage/risk-result'));
     expect(paths, contains('/triage/symptom-report'));
+    expect(paths, contains('/medication-tracking'));
   });
 
   test('route helpers separate public patient and provider routes', () {
     expect(isPublicRoute('/auth'), isTrue);
     expect(isPublicRoute('/auth/chp'), isTrue);
+    expect(isPublicRoute('/medication-tracking'), isFalse);
+    expect(isSharedProtectedRoute('/medication-tracking'), isTrue);
     expect(isPatientRoute('/'), isTrue);
     expect(isPatientRoute('/referral'), isTrue);
     expect(isPatientRoute('/dashboard/provider'), isFalse);

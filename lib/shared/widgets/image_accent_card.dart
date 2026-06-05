@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 
 enum ImageAccentContentStyle {
+  split,
   glass,
   fullOverlay,
   plain,
@@ -18,7 +20,7 @@ class ImageAccentCard extends StatelessWidget {
     this.accentColor = AppTheme.primary,
     this.padding = const EdgeInsets.all(16),
     this.imageWidth = 86,
-    this.contentStyle = ImageAccentContentStyle.glass,
+    this.contentStyle = ImageAccentContentStyle.split,
   });
 
   final String imageAsset;
@@ -32,63 +34,108 @@ class ImageAccentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textScaler = MediaQuery.textScalerOf(context);
 
-    final card = Container(
-      constraints: BoxConstraints(minHeight: imageWidth + 34),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppTheme.radius),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : accentColor.withValues(alpha: 0.22),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: isDark ? 0.18 : 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.passthrough,
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              imageAsset,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => ColoredBox(
-                color: accentColor.withValues(alpha: 0.22),
-              ),
+    final card = LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width - 32;
+        final responsiveHeight =
+            RepairSizing.imageCardHeight(context, availableWidth);
+        final imageHeight = textScaler.scale(1) > 1.25
+            ? responsiveHeight.clamp(104.0, 168.0)
+            : responsiveHeight;
+        final compactPadding =
+            availableWidth < 180 ? const EdgeInsets.all(12) : padding;
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radius),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : accentColor.withValues(alpha: 0.22),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: isDark ? 0.18 : 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    accentColor.withValues(alpha: isDark ? 0.30 : 0.18),
-                    Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
-                    accentColor.withValues(alpha: isDark ? 0.08 : 0.02),
+          clipBehavior: Clip.antiAlias,
+          child: contentStyle == ImageAccentContentStyle.split
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: imageHeight,
+                      child: _ImageBand(
+                        imageAsset: imageAsset,
+                        accentColor: accentColor,
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E1E28)
+                            : Colors.white.withValues(alpha: 0.98),
+                      ),
+                      child: Padding(
+                        padding: compactPadding,
+                        child: child,
+                      ),
+                    ),
+                  ],
+                )
+              : Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset(
+                        imageAsset,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: accentColor.withValues(alpha: 0.22),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              accentColor.withValues(
+                                alpha: isDark ? 0.30 : 0.18,
+                              ),
+                              Colors.black.withValues(
+                                alpha: isDark ? 0.28 : 0.10,
+                              ),
+                              accentColor.withValues(
+                                alpha: isDark ? 0.08 : 0.02,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: _ImageCardContentPlate(
+                        accentColor: accentColor,
+                        padding: compactPadding,
+                        style: contentStyle,
+                        child: child,
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: _ImageCardContentPlate(
-              accentColor: accentColor,
-              padding: padding,
-              style: contentStyle,
-              child: child,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (onTap == null) return card;
@@ -100,6 +147,46 @@ class ImageAccentCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radius),
         child: card,
       ),
+    );
+  }
+}
+
+class _ImageBand extends StatelessWidget {
+  const _ImageBand({
+    required this.imageAsset,
+    required this.accentColor,
+  });
+
+  final String imageAsset;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          imageAsset,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => ColoredBox(
+            color: accentColor.withValues(alpha: 0.22),
+          ),
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+                AppTheme.primary.withValues(alpha: isDark ? 0.42 : 0.30),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -45,8 +45,8 @@ class _AuthEntryScreenState extends ConsumerState<AuthEntryScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _AuthChoiceButton(
-            icon: Icons.phone_android,
-            title: l10n.continueWithPhoneOtp,
+            icon: Icons.lock_outline,
+            title: l10n.signInTitle,
             color: AppTheme.primary,
             onTap: () => context.push('/auth/sign-in'),
           ),

@@ -91,6 +91,7 @@ abstract class AppLocalizations {
 
   String get home;
   String get triage;
+  String get careTab;
   String get profile;
   String get myProfile;
 
@@ -290,9 +291,13 @@ abstract class AppLocalizations {
   String get languageSwahili;
   String get languageChangedEn;
   String get languageChangedSw;
+  String get changePassword;
+  String get changePasswordSubtitle;
 
   String get whatsAppMessage;
   String get nearestFacilitySubtitle;
+  String get medicationTrackerTitle;
+  String get medicationTrackerSubtitle;
 
   String get chooseAccessSubtitle;
   String get continueAsGuest;
@@ -408,9 +413,61 @@ abstract class AppLocalizations {
   String get callMother;
   String get message;
   String get markContacted;
+  String get drugRegistry;
   String get contacted;
   String get assignedArea;
   String get lastUpdate;
   String get today;
   String get yesterday;
+  String get backendOfflineTitle;
+  String get backendOfflineMessage;
+  String get backendConnectedTitle;
+  String get backendConnectedMessage;
+  String get completeCareProfile;
+  String get completeCareProfileSubtitle;
+  String get careReports;
+  String get careFollowUps;
+  String get carePrescriptions;
+  String get careAlerts;
+  String get noFollowUpsYet;
+  String get noPrescriptionsYet;
+  String get noAlertsYet;
+  String get verifiedFacility;
+  String get verifiedReferralSource;
+  String get nearbyVerifiedFacilities;
+  String get noVerifiedNearbyFacilities;
+  String get locationOffFacilityFallback;
+  String get facilitiesLoadError;
+  String get showingCurrentLocationFacilities;
+  String get mapDataAttribution;
+  String get aiScreeningReferralChecked;
+  String get localScreeningReferralGuidance;
+  String get findVerifiedCareNow;
+  String get viewVerifiedCareOptions;
+  String get nearbyMapResults;
+  String get unverifiedMapResult;
+  String get mapResultsNotClinical;
+  String get verifiedCareNearYou;
+  String verifiedFacilitiesCount(int count);
+  String mapResultsCount(int count);
+  String get viewMoreMapResults;
+  String get showFewerMapResults;
+  String get submitForAiRiskScreening;
+  String get reviewForAiScreening;
+  String get runAiRiskScreening;
+  String get aiAssistedScreening;
+  String get localSafetyScreening;
+  String get useLocalSafetyScreening;
+  String get aiServiceUnavailable;
+  String get patientProfileRequiredForAi;
+  String get symptomStrengthQuestion;
+  String get symptomStartQuestion;
+  String get screeningSafetyCopy;
+  String get ancSpecialCases;
+  String get ancSpecialCasesSubtitle;
+  String get ancProfileEmpty;
+  String get ancProfileRecordedByCareTeam;
+  String get askProviderToUpdateAnc;
+  String get ancContextForReferral;
+  String get ancContextForRisk;
 }

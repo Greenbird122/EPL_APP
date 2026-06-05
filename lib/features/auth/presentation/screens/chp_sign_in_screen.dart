@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
-import 'package:repair_ai/core/utils/async_guard.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
-import 'package:repair_ai/features/auth/presentation/controllers/login_profile_providers.dart';
+import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_shell.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -23,6 +22,8 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isSubmitting = false;
+  bool _rememberMe = true;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -34,32 +35,49 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
   Future<void> _signIn() async {
     final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
 
-    final ok = await runWithTimeout(
-      () async {
-        await Future<void>.delayed(const Duration(milliseconds: 650));
-        ref.read(profileFormDataProvider.notifier).state = ProfileFormData(
-          name: 'CHP Care Team',
-          email: _staffController.text.trim(),
-        );
-        await ref.read(onboardingCompleteProvider.notifier).markComplete();
-        await AuthSessionNotifier.acceptTerms();
-        await ref
-            .read(authSessionProvider.notifier)
-            .signIn(status: AuthSessionStatus.provider);
-        return true;
-      },
-      timeout: const Duration(seconds: 12),
-    );
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    if (ok != true) {
-      showAppErrorSnackBar(context, l10n.timeoutError);
-      return;
+    try {
+      final session =
+          await ref.read(authSessionProvider.notifier).signInWithBackend(
+                username: _staffController.text.trim(),
+                password: _passwordController.text,
+                rememberMe: _rememberMe,
+              );
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      if (!session.isProvider) {
+        await ref.read(authSessionProvider.notifier).signOutBackend();
+        if (!mounted) return;
+        const message = 'This sign-in is for CHP/provider accounts only.';
+        setState(() {
+          _isSubmitting = false;
+          _errorMessage = message;
+        });
+        showAppErrorSnackBar(context, message);
+        return;
+      }
+      context.go('/dashboard/provider');
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      final message = friendlyAuthError(error);
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = message;
+      });
+      showAppErrorSnackBar(context, message);
+    } catch (error) {
+      if (!mounted) return;
+      final message = friendlyAuthError(error, fallback: l10n.timeoutError);
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = message;
+      });
+      showAppErrorSnackBar(context, message);
     }
-    context.go('/dashboard/provider');
   }
 
   @override
@@ -71,7 +89,10 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
       title: l10n.providerSignInTitle,
       subtitle: l10n.providerSignInSubtitle,
       showBack: true,
-      imageAsset: 'assets/illustrations/hospital.jpg',
+      errorMessage: _errorMessage,
+      statusMessage: _isSubmitting ? 'Checking staff credentials...' : null,
+      isLoading: _isSubmitting,
+      onDismissError: () => setState(() => _errorMessage = null),
       child: Form(
         key: _formKey,
         child: Column(
@@ -132,12 +153,22 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
               validator: (value) {
                 final text = value ?? '';
                 if (text.isEmpty) return l10n.passwordRequired;
-                if (text.length < 6) return l10n.passwordMinLength;
                 return null;
               },
               onFieldSubmitted: (_) => _signIn(),
             ),
             const SizedBox(height: 14),
+            CheckboxListTile(
+              value: _rememberMe,
+              onChanged: _isSubmitting
+                  ? null
+                  : (value) => setState(() => _rememberMe = value ?? true),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text('Remember me'),
+              subtitle: const Text('Keep this staff session on this device.'),
+            ),
+            const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: _isSubmitting ? null : _signIn,
               icon: _isSubmitting

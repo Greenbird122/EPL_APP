@@ -35,6 +35,9 @@ class TriageResult {
     required this.reasons,
     required this.recommendation,
     required this.urgencyHours,
+    this.needsReferral = false,
+    this.aiScreened = false,
+    this.backendTriageId,
   });
 
   final RiskLevel riskLevel;
@@ -42,4 +45,7 @@ class TriageResult {
   final List<String> reasons;
   final String recommendation;
   final int urgencyHours;
+  final bool needsReferral;
+  final bool aiScreened;
+  final int? backendTriageId;
 }
