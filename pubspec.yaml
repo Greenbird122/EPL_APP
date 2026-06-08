@@ -30,7 +30,8 @@ dependencies:
   shared_preferences: ^2.3.0
   hive_flutter: ^1.1.0
   uuid: ^4.5.1
-  speech_to_text: ^7.0.0
+  record: ^7.0.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +72,6 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: assets/icons/repair_ai_icon.png
+  image_path: assets/icons/repair_ai_logo_splash.png
   adaptive_icon_background: "#6B4EFF"
-  adaptive_icon_foreground: assets/icons/repair_ai_icon_foreground.png
+  adaptive_icon_foreground: assets/icons/repair_ai_logo_splash.png

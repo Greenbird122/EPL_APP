@@ -6,14 +6,16 @@ final ancProfileRepositoryProvider = Provider<AncProfileRepository>((ref) {
   return AncProfileRepository();
 });
 
-final ancProfileProvider =
-    FutureProvider.family<AncProfile?, String>((ref, patientId) async {
+final ancProfileProvider = FutureProvider.family<AncProfile?, String>((
+  ref,
+  patientId,
+) async {
   return ref.watch(ancProfileRepositoryProvider).fetchProfile(patientId);
 });
 
 class AncProfileSaveController extends StateNotifier<AsyncValue<void>> {
   AncProfileSaveController(this._repository)
-      : super(const AsyncValue.data(null));
+    : super(const AsyncValue.data(null));
 
   final AncProfileRepository _repository;
 
@@ -25,5 +27,5 @@ class AncProfileSaveController extends StateNotifier<AsyncValue<void>> {
 
 final ancProfileSaveControllerProvider =
     StateNotifierProvider<AncProfileSaveController, AsyncValue<void>>((ref) {
-  return AncProfileSaveController(ref.watch(ancProfileRepositoryProvider));
-});
+      return AncProfileSaveController(ref.watch(ancProfileRepositoryProvider));
+    });

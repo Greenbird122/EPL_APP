@@ -16,16 +16,16 @@ class AppTheme {
   static const Color darkSurface = Color(0xFF1E1E28);
 
   static ThemeData get lightTheme => _buildTheme(
-        brightness: Brightness.light,
-        scaffold: background,
-        surface: surface,
-      );
+    brightness: Brightness.light,
+    scaffold: background,
+    surface: surface,
+  );
 
   static ThemeData get darkTheme => _buildTheme(
-        brightness: Brightness.dark,
-        scaffold: darkBackground,
-        surface: darkSurface,
-      );
+    brightness: Brightness.dark,
+    scaffold: darkBackground,
+    surface: darkSurface,
+  );
 
   static ThemeData _buildTheme({
     required Brightness brightness,
@@ -56,18 +56,14 @@ class AppTheme {
         shadowColor: primary.withValues(alpha: isDark ? 0.28 : 0.12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(
-            color: isDark ? Colors.white12 : cardBorder,
-          ),
+          side: BorderSide(color: isDark ? Colors.white12 : cardBorder),
         ),
       ),
       dividerColor: isDark ? Colors.white12 : Colors.grey.shade200,
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark ? darkSurface : Colors.grey.shade50,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radius),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(radius)),
       ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(

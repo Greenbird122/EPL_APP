@@ -68,8 +68,9 @@ class _LanguageTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(title),
-      trailing:
-          selected ? const Icon(Icons.check_circle, color: Colors.green) : null,
+      trailing: selected
+          ? const Icon(Icons.check_circle, color: Colors.green)
+          : null,
       onTap: onTap,
     );
   }

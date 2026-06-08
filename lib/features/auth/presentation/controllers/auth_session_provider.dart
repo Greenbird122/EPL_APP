@@ -5,24 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login_profile_providers.dart';
 
-enum AuthSessionStatus {
-  signedOut,
-  demo,
-  mother,
-  provider,
-  loading,
-  error,
-}
+enum AuthSessionStatus { signedOut, mother, provider, loading, error }
 
 class AuthSession {
-  const AuthSession({
-    required this.status,
-    this.errorMessage,
-  });
+  const AuthSession({required this.status, this.errorMessage});
 
   const AuthSession.signedOut() : this(status: AuthSessionStatus.signedOut);
   const AuthSession.loading() : this(status: AuthSessionStatus.loading);
-  const AuthSession.demo() : this(status: AuthSessionStatus.demo);
   const AuthSession.mother() : this(status: AuthSessionStatus.mother);
   const AuthSession.provider() : this(status: AuthSessionStatus.provider);
   const AuthSession.error(String message)
@@ -32,7 +21,6 @@ class AuthSession {
   final String? errorMessage;
 
   bool get isLoggedIn =>
-      status == AuthSessionStatus.demo ||
       status == AuthSessionStatus.mother ||
       status == AuthSessionStatus.provider;
 
@@ -42,8 +30,6 @@ class AuthSession {
 
   static AuthSession fromStorage(String? value) {
     switch (value) {
-      case 'demo':
-        return const AuthSession.demo();
       case 'mother':
         return const AuthSession.mother();
       case 'provider':
@@ -68,7 +54,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       final legacyLoggedIn = prefs.getBool('is_logged_in') ?? false;
       final stored = AuthSession.fromStorage(
         prefs.getString('auth_session_status') ??
-            (legacyLoggedIn ? 'demo' : 'signedOut'),
+            (legacyLoggedIn ? 'mother' : 'signedOut'),
       );
       final hasBackendToken = await _hasStoredBackendToken();
       if (!mounted) return;
@@ -81,6 +67,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
           await _persistSession(state);
           if (!mounted) return;
           _setProfileFromBackend(profile);
+          await _loadLinkedPatientProfileIfNeeded(state);
           return;
         } on ApiException catch (error) {
           if (!mounted) return;
@@ -94,9 +81,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
           state = stored;
         }
       } else {
-        state = stored.status == AuthSessionStatus.demo
-            ? stored
-            : const AuthSession.signedOut();
+        state = const AuthSession.signedOut();
       }
     } finally {
       if (mounted) {
@@ -109,7 +94,6 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
     AuthSessionStatus status = AuthSessionStatus.mother,
   }) async {
     final next = switch (status) {
-      AuthSessionStatus.demo => const AuthSession.demo(),
       AuthSessionStatus.provider => const AuthSession.provider(),
       AuthSessionStatus.mother => const AuthSession.mother(),
       _ => const AuthSession.mother(),
@@ -134,6 +118,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       state = next;
       await _persistSession(next, remember: rememberMe);
       _setProfileFromBackend(data);
+      await _loadLinkedPatientProfileIfNeeded(next);
       await AuthSessionNotifier.acceptTerms();
       return next;
     } catch (error) {
@@ -165,7 +150,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
         'password_confirm': passwordConfirm,
       });
       return signInWithBackend(
-        username: username,
+        username: phone,
         password: password,
         rememberMe: rememberMe,
       );
@@ -184,6 +169,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       state = next;
       await _persistSession(next);
       _setProfileFromBackend(profile);
+      await _loadLinkedPatientProfileIfNeeded(next);
     } catch (error) {
       if (error is ApiException && error.statusCode == 401) {
         await signOutBackend();
@@ -235,10 +221,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
     }
   }
 
-  Future<void> _persistSession(
-    AuthSession next, {
-    bool remember = true,
-  }) async {
+  Future<void> _persistSession(AuthSession next, {bool remember = true}) async {
     final prefs = await SharedPreferences.getInstance();
     if (!remember) {
       await prefs.setBool('is_logged_in', false);
@@ -252,6 +235,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   Future<void> signOut() async {
     state = const AuthSession.signedOut();
     _ref.read(profileFormDataProvider.notifier).state = null;
+    _ref.read(currentPatientContextProvider.notifier).state = null;
     await _ref.read(secureTokenStoreProvider).clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_logged_in', false);
@@ -263,11 +247,11 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       'patient' => const AuthSession.mother(),
       'chp' => const AuthSession.provider(),
       'admin' || 'moh' || 'nurse' || 'clinician' => throw const ApiException(
-          'This account is managed in the web dashboard. Please use the website for this role.',
+          'This account is managed on the web dashboard. Please use the website for this role.',
           statusCode: 403,
         ),
       _ => throw ApiException(
-          'Unsupported account role: ${role ?? 'unknown'}.',
+          'This account type is not available in the mobile app yet.',
           statusCode: 403,
         ),
     };
@@ -283,6 +267,27 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
     );
   }
 
+  Future<void> _loadLinkedPatientProfileIfNeeded(AuthSession session) async {
+    if (session.status != AuthSessionStatus.mother) {
+      _ref.read(currentPatientContextProvider.notifier).state = null;
+      return;
+    }
+    final profile = await _ref.read(patientApiProvider).myProfile();
+    final patientId = profile['id'] as int?;
+    if (patientId == null) {
+      throw const ApiException(
+        'Your care profile is not ready yet. Please contact support.',
+        statusCode: 404,
+      );
+    }
+    final name = (profile['name'] ?? '').toString().trim();
+    _ref.read(currentPatientContextProvider.notifier).state =
+        CurrentPatientContext(
+      id: patientId,
+      name: name.isEmpty ? 'Patient' : name,
+    );
+  }
+
   (String, String) _splitName(String fullName) {
     final parts = fullName.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return ('', '');
@@ -292,7 +297,7 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
 
   String _messageForError(Object error) {
     if (error is ApiException) return error.message;
-    return 'Backend request failed. Check your connection and try again.';
+    return 'We could not reach care services. Check your internet and try again.';
   }
 
   static Future<bool> hasAcceptedTerms() async {

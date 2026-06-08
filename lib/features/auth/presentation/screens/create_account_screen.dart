@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
+import 'package:repair_ai/features/auth/presentation/widgets/auth_form_widgets.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_shell.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -29,6 +29,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   bool _obscurePassword = true;
   bool _isSubmitting = false;
   String? _errorMessage;
+  String? _statusMessage;
+  AuthStatusTone _statusTone = AuthStatusTone.info;
 
   @override
   void dispose() {
@@ -54,6 +56,8 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
+      _statusMessage = l10n.authCreatingAccountStatus;
+      _statusTone = AuthStatusTone.info;
     });
     try {
       final session = await ref
@@ -68,26 +72,43 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             rememberMe: true,
           );
       if (!mounted) return;
-      setState(() => _isSubmitting = false);
-      context
-          .go(session.isProvider ? '/dashboard/provider' : '/login/transition');
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      final message = friendlyAuthError(error);
       setState(() {
         _isSubmitting = false;
+        _statusMessage = l10n.authAccountCreatedStatus;
+        _statusTone = AuthStatusTone.success;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      if (!mounted) return;
+      context.go(
+        session.isProvider ? '/dashboard/provider' : '/login/transition',
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      final message = friendlyAuthStatusMessage(context, error);
+      setState(() {
+        _isSubmitting = false;
+        _statusMessage = null;
         _errorMessage = message;
       });
       showAppErrorSnackBar(context, message);
     } catch (error) {
       if (!mounted) return;
-      final message = friendlyAuthError(error, fallback: l10n.timeoutError);
+      final message = friendlyAuthStatusMessage(
+        context,
+        error,
+        fallback: l10n.authCareServicesUnavailable,
+      );
       setState(() {
         _isSubmitting = false;
+        _statusMessage = null;
         _errorMessage = message;
       });
       showAppErrorSnackBar(context, message);
     }
+  }
+
+  void _clearError() {
+    if (_errorMessage != null) setState(() => _errorMessage = null);
   }
 
   @override
@@ -99,57 +120,66 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
       subtitle: l10n.createAccountSubtitle,
       showBack: true,
       errorMessage: _errorMessage,
-      statusMessage: _isSubmitting ? 'Creating your account...' : null,
+      statusMessage: _statusMessage,
       isLoading: _isSubmitting,
+      statusTone: _statusTone,
       onDismissError: () => setState(() => _errorMessage = null),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextFormField(
+            AuthSectionHeader(
+              icon: Icons.person_outline,
+              title: l10n.accountDetailsSection,
+            ),
+            AuthTextField(
               controller: _nameController,
-              decoration: InputDecoration(
-                labelText: l10n.name,
-                prefixIcon: const Icon(Icons.person_outline),
-              ),
+              onChanged: (_) => _clearError(),
+              label: l10n.name,
+              icon: Icons.person_outline,
+              textInputAction: TextInputAction.next,
               validator: (value) =>
                   (value ?? '').trim().length < 2 ? l10n.nameTooShort : null,
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthTextField(
               controller: _usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                helperText: 'You will use this to sign in.',
-                prefixIcon: Icon(Icons.alternate_email),
-              ),
+              onChanged: (_) => _clearError(),
+              label: l10n.usernameCareIdLabel,
+              helperText: l10n.usernameCreateHelper,
+              icon: Icons.alternate_email,
+              textInputAction: TextInputAction.next,
               validator: (value) {
                 final text = (value ?? '').trim();
-                if (text.length < 3) return 'Username is required';
-                if (text.contains(' ')) return 'Username cannot contain spaces';
+                if (text.length < 3) return l10n.usernameCareIdRequired;
+                if (text.contains(' ')) return l10n.usernameCareIdNoSpaces;
                 return null;
               },
             ),
-            const SizedBox(height: 12),
-            TextFormField(
+            const SizedBox(height: 18),
+            AuthSectionHeader(
+              icon: Icons.phone_android,
+              title: l10n.contactDetailsSection,
+            ),
+            AuthTextField(
               controller: _phoneController,
+              onChanged: (_) => _clearError(),
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: l10n.phoneNumberLabel,
-                prefixIcon: const Icon(Icons.phone_android),
-              ),
+              textInputAction: TextInputAction.next,
+              label: l10n.phoneNumberLabel,
+              icon: Icons.phone_android,
               validator: (value) =>
                   (value ?? '').trim().length < 10 ? 'Phone is required' : null,
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthTextField(
               controller: _emailController,
+              onChanged: (_) => _clearError(),
               keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: l10n.emailLabel,
-                prefixIcon: const Icon(Icons.email_outlined),
-              ),
+              textInputAction: TextInputAction.next,
+              label: l10n.emailLabel,
+              icon: Icons.email_outlined,
               validator: (value) {
                 final text = (value ?? '').trim();
                 if (text.isEmpty) return l10n.emailRequired;
@@ -159,24 +189,26 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 return null;
               },
             ),
+            const SizedBox(height: 18),
+            AuthSectionHeader(
+              icon: Icons.lock_outline,
+              title: l10n.securitySection,
+            ),
+            PasswordGuidance(text: l10n.passwordGuidanceShort),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthTextField(
               controller: _passwordController,
+              onChanged: (_) => _clearError(),
               obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                labelText: l10n.password,
-                helperText:
-                    'Use at least 8 characters. Avoid common or numeric-only passwords.',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  onPressed: () => setState(
-                    () => _obscurePassword = !_obscurePassword,
-                  ),
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                  ),
+              label: l10n.password,
+              icon: Icons.lock_outline,
+              suffixIcon: IconButton(
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                 ),
               ),
               validator: (value) {
@@ -195,13 +227,12 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               },
             ),
             const SizedBox(height: 12),
-            TextFormField(
+            AuthTextField(
               controller: _confirmPasswordController,
+              onChanged: (_) => _clearError(),
               obscureText: _obscurePassword,
-              decoration: const InputDecoration(
-                labelText: 'Confirm password',
-                prefixIcon: Icon(Icons.lock_reset_outlined),
-              ),
+              label: 'Confirm password',
+              icon: Icons.lock_reset_outlined,
               validator: (value) {
                 if ((value ?? '').isEmpty) return 'Confirm your password';
                 if (value != _passwordController.text) {
@@ -211,36 +242,26 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               },
             ),
             const SizedBox(height: 12),
-            CheckboxListTile(
+            AuthConsentRow(
               value: _acceptedConsent,
-              onChanged: (value) =>
-                  setState(() => _acceptedConsent = value ?? false),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(l10n.consentText),
+              onChanged: (value) => setState(() => _acceptedConsent = value),
+              text: l10n.consentText,
             ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _isSubmitting ? null : _continue,
-              icon: _isSubmitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.person_add_alt_1),
-              label: Text(l10n.createAccountTitle),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-              ),
+            const SizedBox(height: 14),
+            AuthPrimaryButton(
+              onPressed: _continue,
+              isLoading: _isSubmitting,
+              icon: Icons.person_add_alt_1,
+              label: l10n.createAccountTitle,
             ),
-            TextButton(
-              onPressed: () => context.go('/auth/sign-in'),
-              child: Text(l10n.alreadyHaveAccountSignIn),
+            const SizedBox(height: 8),
+            AuthLinkWrap(
+              children: [
+                TextButton(
+                  onPressed: () => context.go('/auth/sign-in'),
+                  child: Text(l10n.alreadyHaveAccountSignIn),
+                ),
+              ],
             ),
           ],
         ),

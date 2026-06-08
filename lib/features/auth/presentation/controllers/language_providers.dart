@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AppLanguage {
-  en,
-  sw,
-}
+enum AppLanguage { en, sw }
 
 class LanguageNotifier extends StateNotifier<AppLanguage> {
   LanguageNotifier() : super(AppLanguage.en) {
@@ -57,7 +54,8 @@ extension AppLanguageMeta on AppLanguage {
   }
 }
 
-final languageProvider =
-    StateNotifierProvider<LanguageNotifier, AppLanguage>((ref) {
+final languageProvider = StateNotifierProvider<LanguageNotifier, AppLanguage>((
+  ref,
+) {
   return LanguageNotifier();
 });

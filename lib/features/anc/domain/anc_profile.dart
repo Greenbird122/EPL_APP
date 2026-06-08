@@ -207,7 +207,4 @@ class AncContextFlag {
 
 enum AncFlagSeverity { warning, urgent }
 
-enum AncProfileMode {
-  patientReadOnly,
-  providerManage,
-}
+enum AncProfileMode { patientReadOnly, providerManage }

@@ -1,20 +1,27 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/network/backend_heartbeat_provider.dart';
+import 'package:repair_ai/core/network/backend_services.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
+import 'package:repair_ai/core/utils/launch_helpers.dart';
 import 'package:repair_ai/core/utils/responsive.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
 import 'package:repair_ai/features/triage/domain/symptom_catalog.dart';
 import 'package:repair_ai/features/triage/domain/triage_rules.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
+import 'package:record/record.dart';
 import 'package:repair_ai/shared/widgets/bottom_nav.dart';
-import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/repair_buttons.dart';
 import 'package:repair_ai/shared/widgets/repair_card.dart';
 import 'package:repair_ai/shared/widgets/responsive_page.dart';
+
+enum TriageInputMode { text, voiceRecording, voiceCall }
 
 class SymptomReportScreen extends ConsumerStatefulWidget {
   const SymptomReportScreen({super.key});
@@ -30,46 +37,152 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
   String severity = 'moderate';
   String duration = 'today';
   final _notesController = TextEditingController();
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  bool _speechAvailable = false;
-  bool _isListening = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initSpeech();
-  }
+  final AudioRecorder _recorder = AudioRecorder();
+  StreamSubscription<Uint8List>? _recordingSub;
+  Timer? _recordingTimer;
+  final List<int> _recordedPcmBytes = [];
+  TriageInputMode _inputMode = TriageInputMode.text;
+  bool _isRecording = false;
+  bool _isTranscribing = false;
+  int _recordingSeconds = 0;
+  String? _voiceStatus;
 
   @override
   void dispose() {
+    _recordingTimer?.cancel();
+    _recordingSub?.cancel();
+    _recorder.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
-  Future<void> _initSpeech() async {
-    _speechAvailable = await _speech.initialize();
-    if (mounted) setState(() {});
+  Future<void> _toggleRecording() async {
+    final l10n = AppLocalizations.of(context);
+    if (_isRecording) {
+      await _stopAndTranscribe();
+      return;
+    }
+    try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!mounted) return;
+      if (!hasPermission) {
+        showAppErrorSnackBar(context, l10n.voiceRecordingUnavailable);
+        return;
+      }
+      _recordedPcmBytes.clear();
+      final stream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+      );
+      _recordingSub = stream.listen(_recordedPcmBytes.addAll);
+      _recordingTimer?.cancel();
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() => _recordingSeconds += 1);
+      });
+      setState(() {
+        _isRecording = true;
+        _recordingSeconds = 0;
+        _voiceStatus = null;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _voiceStatus = l10n.voiceRecordingUnavailable);
+      }
+    }
   }
 
-  Future<void> _toggleListen() async {
+  Future<void> _stopAndTranscribe() async {
     final l10n = AppLocalizations.of(context);
-    if (!_speechAvailable) {
-      showAppErrorSnackBar(context, l10n.voiceNotAvailable);
-      return;
+    try {
+      await _recorder.stop();
+      await _recordingSub?.cancel();
+      _recordingTimer?.cancel();
+      if (!mounted) return;
+      setState(() {
+        _isRecording = false;
+        _isTranscribing = true;
+        _voiceStatus = l10n.transcribingVoice;
+      });
+      final audioBytes = _wavFromPcm16(
+        Uint8List.fromList(_recordedPcmBytes),
+        sampleRate: 16000,
+        channels: 1,
+      );
+      final data = await ref.read(triageApiProvider).transcribeAudio(
+            fileBytes: audioBytes,
+            fileName: 'repair_ai_symptoms.wav',
+            language: AppLocalizations.of(context).locale == 'sw' ? 'sw' : 'en',
+          );
+      final transcript = '${data['transcript'] ?? ''}'.trim();
+      if (transcript.isEmpty) {
+        setState(() => _voiceStatus = l10n.voiceRecordingUnavailable);
+        return;
+      }
+      _notesController.text = transcript;
+      _notesController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _notesController.text.length),
+      );
+      setState(() => _voiceStatus = l10n.voiceRecordingReady);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _voiceStatus = l10n.voiceRecordingUnavailable);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isTranscribing = false);
+      }
     }
-    if (_isListening) {
-      await _speech.stop();
-      setState(() => _isListening = false);
-      return;
+  }
+
+  Uint8List _wavFromPcm16(
+    Uint8List pcmBytes, {
+    required int sampleRate,
+    required int channels,
+  }) {
+    final byteRate = sampleRate * channels * 2;
+    final dataLength = pcmBytes.length;
+    final output = BytesBuilder();
+
+    void writeString(String value) => output.add(value.codeUnits);
+    void writeUint16(int value) {
+      output.add([value & 0xff, (value >> 8) & 0xff]);
     }
-    setState(() => _isListening = true);
-    await _speech.listen(
-      onResult: (result) {
-        _notesController.text = result.recognizedWords;
-        _notesController.selection = TextSelection.fromPosition(
-          TextPosition(offset: _notesController.text.length),
-        );
-      },
+
+    void writeUint32(int value) {
+      output.add([
+        value & 0xff,
+        (value >> 8) & 0xff,
+        (value >> 16) & 0xff,
+        (value >> 24) & 0xff,
+      ]);
+    }
+
+    writeString('RIFF');
+    writeUint32(36 + dataLength);
+    writeString('WAVE');
+    writeString('fmt ');
+    writeUint32(16);
+    writeUint16(1);
+    writeUint16(channels);
+    writeUint32(sampleRate);
+    writeUint32(byteRate);
+    writeUint16(channels * 2);
+    writeUint16(16);
+    writeString('data');
+    writeUint32(dataLength);
+    output.add(pcmBytes);
+    return output.toBytes();
+  }
+
+  Future<void> _callVoiceAssistant() async {
+    final launched = await launchRepairAiVoiceAssistant();
+    if (!mounted || launched) return;
+    showAppErrorSnackBar(
+      context,
+      AppLocalizations.of(context).voiceAssistantUnavailable,
     );
   }
 
@@ -90,6 +203,7 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
   void _reviewAndSubmit() {
     final l10n = AppLocalizations.of(context);
     if (selectedSymptoms.isEmpty) return;
+    final statedAge = _patientStatedAge();
 
     showModalBottomSheet<void>(
       context: context,
@@ -143,6 +257,19 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
               l10n.screeningSafetyCopy,
               style: const TextStyle(fontSize: 13, height: 1.4),
             ),
+            if (statedAge != null) ...[
+              const SizedBox(height: 10),
+              _InfoPill(
+                icon: Icons.person_search_outlined,
+                label: '${l10n.patientStatedAge}: $statedAge',
+              ),
+            ] else ...[
+              const SizedBox(height: 10),
+              _InfoPill(
+                icon: Icons.info_outline,
+                label: l10n.ageNotProvided,
+              ),
+            ],
             const SizedBox(height: 18),
             RepairPrimaryButton(
               label: l10n.runAiRiskScreening,
@@ -159,22 +286,43 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
   }
 
   String _labelFor(String value) {
+    final l10n = AppLocalizations.of(context);
     switch (value) {
       case 'mild':
-        return 'Mild';
+        return l10n.symptomSeverityMild;
       case 'moderate':
-        return 'Moderate';
+        return l10n.symptomSeverityModerate;
       case 'severe':
-        return 'Severe';
+        return l10n.symptomSeveritySevere;
       case 'today':
-        return 'Started today';
+        return l10n.symptomDurationToday;
       case 'two_days':
-        return '1-2 days';
+        return l10n.symptomDurationTwoDays;
       case 'three_plus':
-        return '3+ days';
+        return l10n.symptomDurationThreePlus;
       default:
         return value;
     }
+  }
+
+  String? _patientStatedAge() {
+    final notes = _notesController.text.trim();
+    if (notes.isEmpty) return null;
+    final patterns = [
+      RegExp(r"\b(?:i\s*am|i'm|im|aged|age)\s*(\d{1,2})\b",
+          caseSensitive: false),
+      RegExp(r'\b(\d{1,2})\s*(?:years?|yrs?)\b', caseSensitive: false),
+    ];
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(notes);
+      final value = match?.group(1);
+      if (value == null) continue;
+      final age = int.tryParse(value);
+      if (age != null && age >= 10 && age <= 55) {
+        return '$age';
+      }
+    }
+    return null;
   }
 
   @override
@@ -183,22 +331,26 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
     final trimester = TriageRules.trimesterLabel(gestationalAge, l10n);
     final compact = RepairBreakpoints.isCompactPhone(context);
     final pageInsets = RepairInsets.page(context);
+    final heartbeat = ref.watch(backendHeartbeatProvider);
 
     return Scaffold(
-      appBar: RepairAppBar(
-        title: l10n.reportSymptomsTitle,
-      ),
+      appBar: RepairAppBar(title: l10n.reportSymptomsTitle),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding:
-              pageInsets.copyWith(bottom: RepairInsets.scrollBottom(context)),
+          padding: pageInsets.copyWith(
+            bottom: RepairInsets.scrollBottom(context),
+          ),
           child: ResponsivePageShell(
             maxWidth: RepairSizing.formMaxWidth(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const DemoDisclaimerBanner(compact: true),
                 SizedBox(height: compact ? 12 : 16),
+                _GuidedAiHeader(
+                  compact: compact,
+                  heartbeat: heartbeat,
+                ),
+                SizedBox(height: compact ? 14 : 18),
                 RepairCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,17 +438,17 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                         runSpacing: compact ? 6 : 8,
                         children: [
                           _ChoiceChip(
-                            label: 'Today',
+                            label: _labelFor('today'),
                             selected: duration == 'today',
                             onTap: () => setState(() => duration = 'today'),
                           ),
                           _ChoiceChip(
-                            label: '1-2 days',
+                            label: _labelFor('two_days'),
                             selected: duration == 'two_days',
                             onTap: () => setState(() => duration = 'two_days'),
                           ),
                           _ChoiceChip(
-                            label: '3+ days',
+                            label: _labelFor('three_plus'),
                             selected: duration == 'three_plus',
                             onTap: () =>
                                 setState(() => duration = 'three_plus'),
@@ -417,34 +569,111 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                   },
                 ),
                 SizedBox(height: compact ? 12 : 16),
+                _InputModeSelector(
+                  selectedMode: _inputMode,
+                  onSelected: (mode) {
+                    setState(() {
+                      _inputMode = mode;
+                      _voiceStatus = null;
+                    });
+                    if (mode == TriageInputMode.voiceCall) {
+                      _callVoiceAssistant();
+                    }
+                  },
+                ),
+                if (_inputMode == TriageInputMode.voiceRecording) ...[
+                  const SizedBox(height: 10),
+                  _VoiceRecordingPanel(
+                    isRecording: _isRecording,
+                    isTranscribing: _isTranscribing,
+                    recordingSeconds: _recordingSeconds,
+                    status: _voiceStatus,
+                    onToggle: _toggleRecording,
+                  ),
+                ],
+                if (_inputMode == TriageInputMode.voiceCall) ...[
+                  const SizedBox(height: 10),
+                  RepairCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.call_outlined,
+                            color: AppTheme.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            l10n.triageVoiceCallSubtitle,
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _callVoiceAssistant,
+                          child: Text(l10n.callRepairAiVoiceAssistant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                SizedBox(height: compact ? 12 : 16),
                 RepairCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l10n.symptomNotesHint,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.record_voice_over_outlined,
+                            color: AppTheme.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.describeSymptomsNaturally,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  l10n.describeSymptomsNaturallyHint,
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontSize: 13,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _notesController,
-                        maxLines: 2,
+                        minLines: 3,
+                        maxLines: 5,
                         decoration: InputDecoration(
                           hintText: l10n.symptomNotesHint,
-                          suffixIcon: IconButton(
-                            onPressed: _toggleListen,
-                            icon: Icon(
-                              _isListening ? Icons.mic : Icons.mic_none,
-                              color: _isListening
-                                  ? AppTheme.error
-                                  : AppTheme.primary,
-                            ),
-                            tooltip: _isListening
-                                ? l10n.voiceStop
-                                : l10n.voiceListen,
-                          ),
                         ),
+                        onChanged: (_) => setState(() {}),
                       ),
+                      if (_patientStatedAge() != null) ...[
+                        const SizedBox(height: 10),
+                        _InfoPill(
+                          icon: Icons.verified_user_outlined,
+                          label:
+                              '${l10n.patientStatedAge}: ${_patientStatedAge()}',
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -502,6 +731,342 @@ class _ChoiceChip extends StatelessWidget {
       labelStyle: TextStyle(
         color: selected ? AppTheme.primary : null,
         fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+}
+
+class _InputModeSelector extends StatelessWidget {
+  const _InputModeSelector({
+    required this.selectedMode,
+    required this.onSelected,
+  });
+
+  final TriageInputMode selectedMode;
+  final ValueChanged<TriageInputMode> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final options = [
+      (
+        mode: TriageInputMode.text,
+        icon: Icons.chat_bubble_outline,
+        title: l10n.triageTextMode,
+        subtitle: l10n.triageTextModeSubtitle,
+      ),
+      (
+        mode: TriageInputMode.voiceRecording,
+        icon: Icons.mic_none,
+        title: l10n.triageVoiceRecordingMode,
+        subtitle: l10n.triageVoiceRecordingSubtitle,
+      ),
+      (
+        mode: TriageInputMode.voiceCall,
+        icon: Icons.call_outlined,
+        title: l10n.triageVoiceCallMode,
+        subtitle: l10n.triageVoiceCallSubtitle,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 620;
+        final itemWidth =
+            wide ? (constraints.maxWidth - 16) / 3 : constraints.maxWidth;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final selected = selectedMode == option.mode;
+            return SizedBox(
+              width: itemWidth,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => onSelected(option.mode),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppTheme.primary.withValues(alpha: 0.12)
+                        : Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: selected
+                          ? AppTheme.primary
+                          : Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        option.icon,
+                        color: selected
+                            ? AppTheme.primary
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              option.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: selected ? AppTheme.primary : null,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              option.subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.25,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _VoiceRecordingPanel extends StatelessWidget {
+  const _VoiceRecordingPanel({
+    required this.isRecording,
+    required this.isTranscribing,
+    required this.recordingSeconds,
+    required this.status,
+    required this.onToggle,
+  });
+
+  final bool isRecording;
+  final bool isTranscribing;
+  final int recordingSeconds;
+  final String? status;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final minutes = (recordingSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (recordingSeconds % 60).toString().padLeft(2, '0');
+    final color = isRecording ? AppTheme.error : AppTheme.primary;
+
+    return RepairCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isRecording ? Icons.graphic_eq : Icons.mic_none,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isTranscribing
+                          ? l10n.transcribingVoice
+                          : isRecording
+                              ? '$minutes:$seconds'
+                              : l10n.triageVoiceRecordingMode,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    if (status != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        status!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          RepairPrimaryButton(
+            label: isRecording
+                ? l10n.stopVoiceRecording
+                : l10n.startVoiceRecording,
+            icon: isRecording ? Icons.stop : Icons.mic,
+            onPressed: isTranscribing ? null : onToggle,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GuidedAiHeader extends StatelessWidget {
+  const _GuidedAiHeader({required this.compact, required this.heartbeat});
+
+  final bool compact;
+  final BackendHeartbeatState heartbeat;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isOnline = heartbeat == BackendHeartbeatState.online;
+    final isChecking = heartbeat == BackendHeartbeatState.checking;
+    final toneColor = isOnline
+        ? AppTheme.success
+        : isChecking
+            ? AppTheme.warning
+            : AppTheme.error;
+    final toneLabel = isOnline
+        ? l10n.aiReady
+        : isChecking
+            ? l10n.aiReadinessChecking
+            : l10n.aiUnavailable;
+
+    return Container(
+      padding: EdgeInsets.all(compact ? 14 : 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primary.withValues(alpha: 0.16),
+            AppTheme.accent.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _InfoPill(
+                icon: Icons.auto_awesome,
+                label: l10n.guidedAiCheck,
+                color: AppTheme.primary,
+              ),
+              _InfoPill(
+                icon: isOnline
+                    ? Icons.cloud_done_outlined
+                    : isChecking
+                        ? Icons.sync
+                        : Icons.cloud_off_outlined,
+                label: toneLabel,
+                color: toneColor,
+              ),
+            ],
+          ),
+          SizedBox(height: compact ? 10 : 12),
+          Text(
+            l10n.guidedAiCheckTitle,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.guidedAiCheckSubtitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l10n.noAgeGuessingSafety,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    this.color = AppTheme.primary,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: (MediaQuery.sizeOf(context).width - 110).clamp(
+                  120.0,
+                  360.0,
+                ),
+              ),
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

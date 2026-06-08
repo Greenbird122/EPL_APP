@@ -4,7 +4,10 @@ import 'package:repair_ai/features/auth/presentation/controllers/auth_session_pr
 void main() {
   group('AuthSession', () {
     test('maps storage values to explicit session states', () {
-      expect(AuthSession.fromStorage('demo').status, AuthSessionStatus.demo);
+      expect(
+        AuthSession.fromStorage('demo').status,
+        AuthSessionStatus.signedOut,
+      );
       expect(
           AuthSession.fromStorage('mother').status, AuthSessionStatus.mother);
       expect(
@@ -18,7 +21,6 @@ void main() {
     });
 
     test('knows logged-in and provider states', () {
-      expect(const AuthSession.demo().isLoggedIn, isTrue);
       expect(const AuthSession.mother().isLoggedIn, isTrue);
       expect(const AuthSession.provider().isProvider, isTrue);
       expect(const AuthSession.signedOut().isLoggedIn, isFalse);

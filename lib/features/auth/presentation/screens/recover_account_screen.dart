@@ -32,7 +32,7 @@ class _RecoverAccountScreenState extends State<RecoverAccountScreen> {
       return;
     }
     const message =
-        'Password reset is not available on this backend yet. Please use the web dashboard or contact support.';
+        'Password reset is not available in the app yet. Please contact support or use the web dashboard.';
     setState(() {
       _isSending = false;
       _statusMessage = null;

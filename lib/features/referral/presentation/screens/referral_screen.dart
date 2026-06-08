@@ -18,7 +18,6 @@ import 'package:repair_ai/features/triage/application/triage_controller.dart';
 import 'package:repair_ai/features/triage/domain/triage_result.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/shared/widgets/bottom_nav.dart';
-import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/repair_buttons.dart';
 import 'package:repair_ai/shared/widgets/responsive_page.dart';
@@ -37,10 +36,7 @@ class ReferralScreen extends ConsumerWidget {
     final compact = RepairBreakpoints.isCompactPhone(context);
 
     return Scaffold(
-      appBar: RepairAppBar(
-        title: l10n.findCareTitle,
-        showDemoChip: true,
-      ),
+      appBar: RepairAppBar(title: l10n.findCareTitle),
       body: SingleChildScrollView(
         padding: RepairInsets.scroll(context),
         child: ResponsivePageShell(
@@ -122,8 +118,9 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
         widget.facilitiesState?.facilities ?? const <ReferralFacility>[];
     final mapFacilities =
         widget.facilitiesState?.mapFacilities ?? const <ReferralFacility>[];
-    final visibleMapFacilities =
-        _showAllMapResults ? mapFacilities : mapFacilities.take(3).toList();
+    final visibleMapFacilities = _showAllMapResults
+        ? mapFacilities
+        : mapFacilities.take(3).toList();
     final isLoading = widget.facilitiesState == null;
     final ancProfile = ref.watch(ancProfileProvider('current-patient')).value;
     final ancFlags = ancProfile?.contextFlags ?? const [];
@@ -131,8 +128,6 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const DemoDisclaimerBanner(compact: true),
-        const SizedBox(height: 12),
         if (widget.isUrgent)
           _UrgentReferralBanner(
             text: l10n.goNowUrgency,
@@ -188,9 +183,9 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
         const SizedBox(height: 18),
         Text(
           l10n.nearbyVerifiedFacilities,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
         if (isLoading)
@@ -199,26 +194,26 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
           _EmptyFacilitiesCard(message: l10n.noVerifiedNearbyFacilities)
         else
           ...facilities.asMap().entries.map(
-                (entry) => _FacilityCard(
-                  facility: entry.value,
-                  selected: entry.value.id == widget.selectedFacility?.id,
-                  recommended: entry.key == 0,
-                  onTap: () => ref
-                      .read(referralStateProvider.notifier)
-                      .selectFacility(entry.key),
-                  onDirections: () => _openDirections(
-                    entry.value,
-                    widget.facilitiesState?.patientLocation,
-                  ),
-                ),
+            (entry) => _FacilityCard(
+              facility: entry.value,
+              selected: entry.value.id == widget.selectedFacility?.id,
+              recommended: entry.key == 0,
+              onTap: () => ref
+                  .read(referralStateProvider.notifier)
+                  .selectFacility(entry.key),
+              onDirections: () => _openDirections(
+                entry.value,
+                widget.facilitiesState?.patientLocation,
               ),
+            ),
+          ),
         if (!isLoading && mapFacilities.isNotEmpty) ...[
           const SizedBox(height: 18),
           Text(
             l10n.nearbyMapResults,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           _NoticeCard(
@@ -234,9 +229,8 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () => setState(
-                  () => _showAllMapResults = !_showAllMapResults,
-                ),
+                onPressed: () =>
+                    setState(() => _showAllMapResults = !_showAllMapResults),
                 icon: Icon(
                   _showAllMapResults ? Icons.expand_less : Icons.expand_more,
                 ),
@@ -254,9 +248,9 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
           patientLocation: widget.facilitiesState?.patientLocation,
           onCallFacility: () => _callFacility(widget.selectedFacility),
           onWhatsApp: () => launchWhatsAppHelp(context),
-          onTransport: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.transportRequestQueued)),
-          ),
+          onTransport: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.transportRequestQueued))),
         ),
         const SizedBox(height: 12),
         const UssdAccessCard(compact: true),
@@ -339,9 +333,9 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
         notifier.complete();
         break;
       case ReferralUiStatus.completed:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.referralAlreadyCompleted)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.referralAlreadyCompleted)));
         return;
       case ReferralUiStatus.cancelled:
       case ReferralUiStatus.draft:
@@ -351,9 +345,7 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
           try {
             await ref.read(referralApiProvider).generate(triageId: triageId);
           } on ApiException catch (error) {
-            messenger.showSnackBar(
-              SnackBar(content: Text(error.message)),
-            );
+            messenger.showSnackBar(SnackBar(content: Text(error.message)));
             return;
           } catch (_) {
             messenger.showSnackBar(
@@ -365,9 +357,7 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
         notifier.send();
         break;
     }
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.referralStatusUpdated)),
-    );
+    messenger.showSnackBar(SnackBar(content: Text(l10n.referralStatusUpdated)));
   }
 
   Future<void> _callFacility(ReferralFacility? facility) async {
@@ -395,10 +385,7 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
 }
 
 class _ReferralMapCard extends StatelessWidget {
-  const _ReferralMapCard({
-    required this.state,
-    required this.selectedFacility,
-  });
+  const _ReferralMapCard({required this.state, required this.selectedFacility});
 
   final ReferralFacilitiesState state;
   final ReferralFacility? selectedFacility;
@@ -410,7 +397,8 @@ class _ReferralMapCard extends StatelessWidget {
       ...state.facilities.map((f) => f.point).whereType<LatLng>(),
       ...state.mapFacilities.map((f) => f.point).whereType<LatLng>(),
     ];
-    final center = selectedFacility?.point ??
+    final center =
+        selectedFacility?.point ??
         state.patientLocation ??
         (points.isNotEmpty ? points.first : const LatLng(0.5635, 34.5606));
 
@@ -518,9 +506,9 @@ class _MapHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -543,10 +531,7 @@ class _MapHeader extends StatelessWidget {
 }
 
 class _AncReferralNotice extends StatelessWidget {
-  const _AncReferralNotice({
-    required this.title,
-    required this.flags,
-  });
+  const _AncReferralNotice({required this.title, required this.flags});
 
   final String title;
   final List<dynamic> flags;
@@ -562,8 +547,10 @@ class _AncReferralNotice extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.assignment_turned_in_outlined,
-                    color: AppTheme.warning),
+                const Icon(
+                  Icons.assignment_turned_in_outlined,
+                  color: AppTheme.warning,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -635,10 +622,7 @@ class _MapAttribution extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          child: Text(text, style: Theme.of(context).textTheme.labelSmall),
         ),
       ),
     );
@@ -900,10 +884,7 @@ class _MapFacilityCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _Chip(
-                  label: l10n.unverifiedMapResult,
-                  color: AppTheme.warning,
-                ),
+                _Chip(label: l10n.unverifiedMapResult, color: AppTheme.warning),
               ],
             ),
             const SizedBox(height: 8),
@@ -913,9 +894,9 @@ class _MapFacilityCard extends StatelessWidget {
                 onPressed: facility.point == null
                     ? null
                     : () => launchFacilityDirections(
-                          latitude: facility.point!.latitude,
-                          longitude: facility.point!.longitude,
-                        ),
+                        latitude: facility.point!.latitude,
+                        longitude: facility.point!.longitude,
+                      ),
                 icon: const Icon(Icons.directions),
                 label: Text(l10n.openFacilityDirections),
               ),
@@ -991,11 +972,11 @@ class _ActionGrid extends StatelessWidget {
               selectedFacility?.point == null
                   ? null
                   : () => launchFacilityDirections(
-                        latitude: selectedFacility!.point!.latitude,
-                        longitude: selectedFacility!.point!.longitude,
-                        fromLatitude: patientLocation?.latitude,
-                        fromLongitude: patientLocation?.longitude,
-                      ),
+                      latitude: selectedFacility!.point!.latitude,
+                      longitude: selectedFacility!.point!.longitude,
+                      fromLatitude: patientLocation?.latitude,
+                      fromLongitude: patientLocation?.longitude,
+                    ),
             ),
             _ActionTile(Icons.chat, 'WhatsApp', onWhatsApp),
             _ActionTile(Icons.local_taxi, l10n.transport, onTransport),
@@ -1018,11 +999,7 @@ class _ActionTile extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon),
-      label: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       style: OutlinedButton.styleFrom(
         alignment: Alignment.centerLeft,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

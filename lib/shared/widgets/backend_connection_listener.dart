@@ -19,8 +19,10 @@ class _BackendConnectionListenerState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<BackendHeartbeatState>(backendHeartbeatProvider,
-        (previous, next) {
+    ref.listen<BackendHeartbeatState>(backendHeartbeatProvider, (
+      previous,
+      next,
+    ) {
       if (next == BackendHeartbeatState.offline && !_hasShownOffline) {
         _hasShownOffline = true;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,14 +77,14 @@ class BackendConnectionBar extends ConsumerWidget {
     final visible = ref.watch(backendRestoredBannerProvider);
     final top = MediaQuery.paddingOf(context).top + kToolbarHeight;
 
-    return IgnorePointer(
-      ignoring: !visible,
-      child: AnimatedPositioned(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        left: 0,
-        right: 0,
-        top: visible ? top : top - 36,
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+      left: 0,
+      right: 0,
+      top: visible ? top : top - 36,
+      child: IgnorePointer(
+        ignoring: !visible,
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
           opacity: visible ? 1 : 0,
@@ -93,13 +95,18 @@ class BackendConnectionBar extends ConsumerWidget {
               top: false,
               bottom: false,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 7,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Icon(Icons.cloud_done_outlined,
-                        color: Colors.white, size: 18),
+                    Icon(
+                      Icons.cloud_done_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(

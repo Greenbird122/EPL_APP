@@ -3,11 +3,7 @@ import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
 class MotherlyQuoteCard extends StatelessWidget {
-  const MotherlyQuoteCard({
-    super.key,
-    required this.quote,
-    this.author,
-  });
+  const MotherlyQuoteCard({super.key, required this.quote, this.author});
 
   final String quote;
   final String? author;
@@ -35,10 +31,10 @@ class MotherlyQuoteCard extends StatelessWidget {
               quote,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    height: 1.45,
-                    fontStyle: FontStyle.italic,
-                    color: scheme.onSurface,
-                  ),
+                height: 1.45,
+                fontStyle: FontStyle.italic,
+                color: scheme.onSurface,
+              ),
             ),
             if (author != null) ...[
               const SizedBox(height: 10),
@@ -58,8 +54,8 @@ class MotherlyQuoteCard extends StatelessWidget {
   }
 
   static List<String> quotesFor(AppLocalizations l10n) => [
-        l10n.motherQuote1,
-        l10n.motherQuote2,
-        l10n.motherQuote3,
-      ];
+    l10n.motherQuote1,
+    l10n.motherQuote2,
+    l10n.motherQuote3,
+  ];
 }

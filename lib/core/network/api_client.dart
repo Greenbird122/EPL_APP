@@ -43,13 +43,12 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? query,
     bool authenticated = true,
+    Duration? timeout,
   }) async {
     return _sendWithRefresh(
       authenticated: authenticated,
-      request: (headers) => _client.get(
-        _uri(path, query),
-        headers: headers,
-      ),
+      timeout: timeout,
+      request: (headers) => _client.get(_uri(path, query), headers: headers),
     );
   }
 
@@ -57,9 +56,11 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     bool authenticated = true,
+    Duration? timeout,
   }) async {
     return _sendWithRefresh(
       authenticated: authenticated,
+      timeout: timeout,
       request: (headers) => _client.post(
         _uri(path),
         headers: headers,
@@ -72,9 +73,11 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     bool authenticated = true,
+    Duration? timeout,
   }) async {
     return _sendWithRefresh(
       authenticated: authenticated,
+      timeout: timeout,
       request: (headers) => _client.patch(
         _uri(path),
         headers: headers,
@@ -90,9 +93,11 @@ class ApiClient {
     required String fileName,
     required Uint8List fileBytes,
     bool authenticated = true,
+    Duration? timeout,
   }) async {
     return _sendWithRefresh(
       authenticated: authenticated,
+      timeout: timeout,
       request: (headers) async {
         final request = http.MultipartRequest('POST', _uri(path))
           ..fields.addAll(fields)
@@ -111,10 +116,7 @@ class ApiClient {
   }
 
   Map<String, String> _headers({required bool authenticated}) {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   Future<Map<String, String>> _authorizedHeaders() async {
@@ -127,21 +129,21 @@ class ApiClient {
   }
 
   Future<dynamic> _send(
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    Duration? timeout,
+  }) async {
     late final http.Response response;
     try {
-      response = await request().timeout(BackendConfig.requestTimeout);
+      response =
+          await request().timeout(timeout ?? BackendConfig.requestTimeout);
     } on TimeoutException {
       throw const ApiException(
-        'The backend took too long to respond. Please try again.',
+        'Care services are taking longer than expected. Please try again.',
       );
     } on http.ClientException catch (error) {
-      throw ApiException(
-        'Could not connect to the backend. ${error.message}',
-      );
+      throw ApiException('Could not reach care services. ${error.message}');
     } catch (error) {
-      throw ApiException('Could not reach the backend. $error');
+      throw ApiException('Could not reach care services. $error');
     }
 
     final body = response.body.isEmpty ? null : jsonDecode(response.body);
@@ -158,6 +160,7 @@ class ApiClient {
 
   Future<dynamic> _sendWithRefresh({
     required bool authenticated,
+    Duration? timeout,
     required Future<http.Response> Function(Map<String, String> headers)
         request,
   }) async {
@@ -168,6 +171,7 @@ class ApiClient {
               ? await _authorizedHeaders()
               : _headers(authenticated: false),
         ),
+        timeout: timeout,
       );
     } on ApiException catch (error) {
       if (!authenticated || error.statusCode != 401) rethrow;
@@ -175,6 +179,7 @@ class ApiClient {
       if (!refreshed) rethrow;
       return _send(
         () async => request(await _authorizedHeaders()),
+        timeout: timeout,
       );
     }
   }
@@ -210,11 +215,12 @@ class ApiClient {
     final fieldErrors = body.entries
         .map((entry) {
           final value = entry.value;
+          final label = _friendlyFieldName(entry.key);
           if (value is List && value.isNotEmpty) {
-            return '${entry.key}: ${value.first}';
+            return '$label: ${value.first}';
           }
           if (value is String && value.isNotEmpty) {
-            return '${entry.key}: $value';
+            return '$label: $value';
           }
           return null;
         })
@@ -228,12 +234,37 @@ class ApiClient {
 
   String _statusMessage(int statusCode) {
     return switch (statusCode) {
-      400 => 'The request was not accepted. Check the details and try again.',
+      400 => 'Some details need checking. Please review and try again.',
       401 => 'Your username or password was not accepted.',
       403 => 'You do not have permission to access this feature.',
-      404 => 'The backend endpoint was not found.',
-      >= 500 => 'The backend had a server error. Please try again shortly.',
-      _ => 'Request failed with status $statusCode.',
+      404 => 'This action is not available yet.',
+      >= 500 =>
+        'Care services are having trouble right now. Please try again shortly.',
+      _ => 'This action could not be completed. Please try again.',
+    };
+  }
+
+  String _friendlyFieldName(String key) {
+    return switch (key) {
+      'username' => 'Username / care ID',
+      'email' => 'Email',
+      'phone' => 'Phone number',
+      'password' => 'Password',
+      'password_confirm' => 'Confirm password',
+      'first_name' => 'First name',
+      'last_name' => 'Last name',
+      'old_password' => 'Current password',
+      'new_password' => 'New password',
+      'new_password_confirm' => 'Confirm new password',
+      'non_field_errors' => 'Details',
+      'detail' => 'Details',
+      _ => key
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map((part) => part.isEmpty
+              ? part
+              : '${part[0].toUpperCase()}${part.substring(1)}')
+          .join(' '),
     };
   }
 
@@ -241,29 +272,20 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? query,
   }) async {
-    return get(
-      path,
-      query: query,
-    );
+    return get(path, query: query);
   }
 
   Future<dynamic> authorizedPost(
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    return post(
-      path,
-      body: body,
-    );
+    return post(path, body: body);
   }
 
   Future<dynamic> authorizedPatch(
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    return patch(
-      path,
-      body: body,
-    );
+    return patch(path, body: body);
   }
 }

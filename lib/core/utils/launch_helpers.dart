@@ -4,6 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 const kEmergencyPhone = '999';
 const kRepairAiUssdCode = '*384#';
+const kRepairAiVoiceAssistantNumber = String.fromEnvironment(
+  'REPAIR_AI_VOICE_ASSISTANT_NUMBER',
+  defaultValue: '',
+);
 
 Future<void> launchEmergencyCall() async {
   final uri = Uri.parse('tel:$kEmergencyPhone');
@@ -55,6 +59,13 @@ Future<void> launchWhatsAppHelp([BuildContext? context]) async {
 
 Future<bool> launchUssdCode() async {
   final uri = Uri.parse('tel:${Uri.encodeComponent(kRepairAiUssdCode)}');
+  if (!await canLaunchUrl(uri)) return false;
+  return launchUrl(uri);
+}
+
+Future<bool> launchRepairAiVoiceAssistant() async {
+  if (kRepairAiVoiceAssistantNumber.trim().isEmpty) return false;
+  final uri = Uri.parse('tel:${kRepairAiVoiceAssistantNumber.trim()}');
   if (!await canLaunchUrl(uri)) return false;
   return launchUrl(uri);
 }

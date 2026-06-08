@@ -28,8 +28,9 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       state == ThemeMode.dark ? AppAppearance.dark : AppAppearance.light;
 }
 
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
+  ref,
+) {
   return ThemeModeNotifier();
 });
 

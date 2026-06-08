@@ -16,16 +16,17 @@ class MedicationRepository {
 
   Future<List<MedicationModel>> fetchMedications({String? patientId}) async {
     final box = await _openBox();
-    final medications = box.values
-        .whereType<Map<dynamic, dynamic>>()
-        .map(MedicationModel.fromMap)
-        .where(
-          (medication) =>
-              patientId == null || medication.patientId == patientId,
-        )
-        .map(_withComputedStatus)
-        .toList()
-      ..sort((a, b) => b.registrationDate.compareTo(a.registrationDate));
+    final medications =
+        box.values
+            .whereType<Map<dynamic, dynamic>>()
+            .map(MedicationModel.fromMap)
+            .where(
+              (medication) =>
+                  patientId == null || medication.patientId == patientId,
+            )
+            .map(_withComputedStatus)
+            .toList()
+          ..sort((a, b) => b.registrationDate.compareTo(a.registrationDate));
 
     await _persistComputedStatuses(box, medications);
     return medications;

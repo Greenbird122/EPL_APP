@@ -94,8 +94,10 @@ class RepairSizing {
     return 1.08;
   }
 
-  static double supportVisualSize(BuildContext context,
-      {bool compact = false}) {
+  static double supportVisualSize(
+    BuildContext context, {
+    bool compact = false,
+  }) {
     final width = MediaQuery.sizeOf(context).width;
     if (compact || width < 360) return 44;
     if (width < 420) return 56;

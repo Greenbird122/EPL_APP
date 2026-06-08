@@ -54,14 +54,14 @@ class CareTimeline extends StatelessWidget {
             )
           else
             ...steps.asMap().entries.map(
-                  (entry) => _TimelineRow(
-                    icon: entry.value.icon,
-                    title: entry.value.title,
-                    subtitle: entry.value.subtitle,
-                    color: entry.value.color,
-                    isLast: entry.key == steps.length - 1,
-                  ),
-                ),
+              (entry) => _TimelineRow(
+                icon: entry.value.icon,
+                title: entry.value.title,
+                subtitle: entry.value.subtitle,
+                color: entry.value.color,
+                isLast: entry.key == steps.length - 1,
+              ),
+            ),
         ],
       ),
     );
@@ -72,8 +72,9 @@ class CareTimeline extends StatelessWidget {
     final items = <_TimelineStep>[];
     if (latestReport != null) {
       final risk = l10n.riskFromStored(latestReport!.riskLevel);
-      final riskLabel =
-          risk != null ? l10n.riskLabel(risk) : latestReport!.riskLevel;
+      final riskLabel = risk != null
+          ? l10n.riskLabel(risk)
+          : latestReport!.riskLevel;
       items.add(
         _TimelineStep(
           icon: Icons.assignment_turned_in,

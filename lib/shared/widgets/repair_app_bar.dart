@@ -43,10 +43,7 @@ class RepairAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       leading: leading,
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       backgroundColor: AppTheme.primary,
       foregroundColor: Colors.white,
       elevation: 0,

@@ -56,14 +56,25 @@ class HowItWorksScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    l10n.smartCareTagline,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: AppTheme.primary,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _RepairAiMark(compact: compact),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          l10n.smartCareTagline,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.primary,
+                                    height: 1.1,
+                                  ),
                         ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Text(
                     l10n.howItWorksSubtitle,
                     style: TextStyle(
@@ -75,10 +86,10 @@ class HowItWorksScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   const TrustChipsRow(),
                   SizedBox(height: compact ? 14 : 18),
-                  ...steps.map(_HowStepCard.new),
+                  _HowItWorksTimeline(steps: steps),
                   SizedBox(height: compact ? 12 : 18),
                   ElevatedButton(
-                    onPressed: () => context.go('/login'),
+                    onPressed: () => context.go('/auth'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       foregroundColor: Colors.white,
@@ -92,7 +103,7 @@ class HowItWorksScreen extends ConsumerWidget {
                     child: Text(l10n.learnMoreWebsite),
                   ),
                   TextButton(
-                    onPressed: () => context.go('/login'),
+                    onPressed: () => context.go('/auth'),
                     child: Text(l10n.skip),
                   ),
                 ],
@@ -105,62 +116,175 @@ class HowItWorksScreen extends ConsumerWidget {
   }
 }
 
+class _RepairAiMark extends StatelessWidget {
+  const _RepairAiMark({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = compact ? 58.0 : 68.0;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.2),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Image.asset(
+          'assets/icons/repair_ai_logo_splash.png',
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => ColoredBox(
+            color: AppTheme.primary.withValues(alpha: 0.14),
+            child: const Icon(Icons.auto_awesome, color: AppTheme.primary),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HowItWorksTimeline extends StatelessWidget {
+  const _HowItWorksTimeline({required this.steps});
+
+  final List<_StepData> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < steps.length; i++)
+          _HowStepCard(
+            step: steps[i],
+            isFirst: i == 0,
+            isLast: i == steps.length - 1,
+          ),
+      ],
+    );
+  }
+}
+
 class _HowStepCard extends StatelessWidget {
-  const _HowStepCard(this.step);
+  const _HowStepCard({
+    required this.step,
+    required this.isFirst,
+    required this.isLast,
+  });
 
   final _StepData step;
+  final bool isFirst;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 52,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: isFirst
+                        ? Colors.transparent
+                        : AppTheme.primary.withValues(alpha: 0.18),
+                  ),
+                ),
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primary.withValues(alpha: 0.22),
+                        blurRadius: 14,
+                        offset: const Offset(0, 7),
+                      ),
+                    ],
+                  ),
+                  child: Icon(step.icon, color: Colors.white, size: 22),
+                ),
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: isLast
+                        ? Colors.transparent
+                        : AppTheme.primary.withValues(alpha: 0.18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(
+                  color: AppTheme.primary.withValues(alpha: 0.08),
+                ),
               ),
-              child: Center(
-                child: Icon(step.icon, color: AppTheme.primary),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          step.number,
+                          style: TextStyle(
+                            color: AppTheme.primary.withValues(alpha: 0.85),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            step.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      step.description,
+                      style: TextStyle(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.38,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${step.number}  ${step.title}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    step.description,
-                    style: TextStyle(
-                      color: scheme.onSurfaceVariant,
-                      height: 1.38,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

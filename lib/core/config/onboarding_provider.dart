@@ -20,5 +20,5 @@ class OnboardingNotifier extends StateNotifier<bool> {
 
 final onboardingCompleteProvider =
     StateNotifierProvider<OnboardingNotifier, bool>((ref) {
-  return OnboardingNotifier();
-});
+      return OnboardingNotifier();
+    });

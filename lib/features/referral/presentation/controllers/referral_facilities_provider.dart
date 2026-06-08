@@ -7,11 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/network/backend_services.dart';
 
-enum ReferralFacilitySource {
-  gps,
-  countyFallback,
-  unavailable,
-}
+enum ReferralFacilitySource { gps, countyFallback, unavailable }
 
 class ReferralFacility {
   const ReferralFacility({
@@ -127,8 +123,9 @@ class ReferralFacilitiesState {
   bool get hasGps => source == ReferralFacilitySource.gps;
 }
 
-final referralFacilitiesProvider =
-    FutureProvider.autoDispose<ReferralFacilitiesState>((ref) async {
+final referralFacilitiesProvider = FutureProvider.autoDispose<ReferralFacilitiesState>((
+  ref,
+) async {
   final facilityApi = ref.watch(facilityApiProvider);
   final patientApi = ref.watch(patientApiProvider);
 
@@ -247,7 +244,8 @@ Future<List<ReferralFacility>> _nearbyOsmFacilities({
   required double latitude,
   required double longitude,
 }) async {
-  final query = '''
+  final query =
+      '''
 [out:json][timeout:12];
 (
   node(around:20000,$latitude,$longitude)["amenity"~"hospital|clinic|doctors"];
@@ -261,14 +259,16 @@ out center tags 30;
 ''';
 
   try {
-    final response = await http.post(
-      Uri.parse('https://overpass-api.de/api/interpreter'),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
-      body: {'data': query},
-    ).timeout(const Duration(seconds: 15));
+    final response = await http
+        .post(
+          Uri.parse('https://overpass-api.de/api/interpreter'),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+          },
+          body: {'data': query},
+        )
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return const [];
@@ -287,11 +287,13 @@ out center tags 30;
       final name = _stringOrNull(tags['name']);
       if (name == null) continue;
 
-      final lat = _doubleValue(element['lat']) ??
+      final lat =
+          _doubleValue(element['lat']) ??
           (element['center'] is Map
               ? _doubleValue((element['center'] as Map)['lat'])
               : null);
-      final lon = _doubleValue(element['lon']) ??
+      final lon =
+          _doubleValue(element['lon']) ??
           (element['center'] is Map
               ? _doubleValue((element['center'] as Map)['lon'])
               : null);
@@ -308,15 +310,17 @@ out center tags 30;
           longitude: lon,
           patientLatitude: latitude,
           patientLongitude: longitude,
-          kind: _stringOrNull(tags['healthcare']) ??
+          kind:
+              _stringOrNull(tags['healthcare']) ??
               _stringOrNull(tags['amenity']),
         ),
       );
     }
 
     results.sort(
-      (a, b) => (a.distanceKm ?? double.infinity)
-          .compareTo(b.distanceKm ?? double.infinity),
+      (a, b) => (a.distanceKm ?? double.infinity).compareTo(
+        b.distanceKm ?? double.infinity,
+      ),
     );
     return results.take(20).toList();
   } catch (_) {

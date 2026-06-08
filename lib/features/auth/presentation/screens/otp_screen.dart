@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
-import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
-import 'package:repair_ai/features/auth/presentation/controllers/login_profile_providers.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_shell.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -22,7 +19,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   final _phoneController = TextEditingController(text: '+254');
   final _codeController = TextEditingController();
   final bool _codeSent = false;
-  bool _isSubmitting = false;
+  final bool _isSubmitting = false;
   String? _errorMessage;
   String? _statusMessage;
 
@@ -43,45 +40,26 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
     setState(() {
       _errorMessage =
-          'Phone OTP is not connected to the backend yet. Use username and password for now.';
+          'Phone code sign-in is not available in the app yet. Use username and password for now.';
       _statusMessage = null;
     });
   }
 
   Future<void> _verifyCode() async {
-    if (_codeController.text.trim() != '123456') {
-      const message =
-          'Phone OTP is not connected to the backend yet. Use username and password for now.';
-      setState(() => _errorMessage = message);
-      showAppErrorSnackBar(context, message);
-      return;
-    }
-    setState(() => _isSubmitting = true);
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    ref.read(profileFormDataProvider.notifier).state = ProfileFormData(
-      name: widget.isDemoMode ? 'Jane Wanjiku' : 'Mother User',
-      email: widget.isDemoMode ? 'demo@repairai.co.ke' : 'phone-user',
-    );
-    await ref.read(onboardingCompleteProvider.notifier).markComplete();
-    await AuthSessionNotifier.acceptTerms();
-    await ref.read(authSessionProvider.notifier).signIn(
-          status: widget.isDemoMode
-              ? AuthSessionStatus.demo
-              : AuthSessionStatus.mother,
-        );
-    if (mounted) context.go('/login/transition');
+    const message =
+        'Phone code sign-in is not available in the app yet. Use username and password for now.';
+    setState(() => _errorMessage = message);
+    showAppErrorSnackBar(context, message);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final title = widget.isDemoMode ? l10n.continueAsGuest : l10n.phoneOtpLabel;
+    final title = l10n.phoneOtpLabel;
 
     return AuthShell(
       title: title,
-      subtitle: widget.isDemoMode
-          ? l10n.fastSignInSubtitle
-          : l10n.recoverAccountSubtitle,
+      subtitle: l10n.recoverAccountSubtitle,
       showBack: true,
       errorMessage: _errorMessage,
       statusMessage: _statusMessage,
@@ -125,9 +103,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     ),
                   )
                 : Icon(_codeSent ? Icons.verified : Icons.sms),
-            label: Text(
-              _codeSent ? l10n.verifyAndContinue : l10n.sendOtp,
-            ),
+            label: Text(_codeSent ? l10n.verifyAndContinue : l10n.sendOtp),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,

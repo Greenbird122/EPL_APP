@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:repair_ai/core/network/api_client.dart';
+import 'package:repair_ai/localization/app_localizations.dart';
 
 class AuthErrorBanner extends StatelessWidget {
-  const AuthErrorBanner({
-    super.key,
-    required this.message,
-    this.onDismiss,
-  });
+  const AuthErrorBanner({super.key, required this.message, this.onDismiss});
 
   final String message;
   final VoidCallback? onDismiss;
@@ -23,18 +19,12 @@ class AuthErrorBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.errorContainer.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: scheme.error.withValues(alpha: 0.28),
-          ),
+          border: Border.all(color: scheme.error.withValues(alpha: 0.28)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.error_outline,
-              color: scheme.onErrorContainer,
-              size: 20,
-            ),
+            Icon(Icons.error_outline, color: scheme.onErrorContainer, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -66,11 +56,7 @@ class AuthErrorBanner extends StatelessWidget {
   }
 }
 
-enum AuthStatusTone {
-  info,
-  warning,
-  success,
-}
+enum AuthStatusTone { info, warning, success }
 
 class AuthStatusBanner extends StatelessWidget {
   const AuthStatusBanner({
@@ -160,17 +146,53 @@ String friendlyAuthError(Object error, {String? fallback}) {
           ? error.message
           : 'This account does not have permission to use this part of the app.',
       404 =>
-        'The backend route for this action was not found. Check the API URL or endpoint setup.',
-      >= 500 => 'The backend had a server problem. Please try again shortly.',
+        'This action is not available yet. Please check setup or contact support.',
+      >= 500 =>
+        'Care services are having trouble right now. Please try again shortly.',
       _ => _friendlyMessageText(error.message, fallback: fallback),
     };
-    return kDebugMode ? '$friendly\nStatus: $statusCode' : friendly;
+    return friendly;
   }
 
   final raw = error.toString();
   final message =
       raw.replaceFirst(RegExp(r'^ApiException\(\d+\):\s*'), '').trim();
   return _friendlyMessageText(message, fallback: fallback);
+}
+
+String friendlyAuthStatusMessage(
+  BuildContext context,
+  Object error, {
+  String? fallback,
+}) {
+  final l10n = AppLocalizations.of(context);
+  if (error is ApiException) {
+    final message = _cleanBackendMessage(error.message);
+    final lower = message.toLowerCase();
+    final statusCode = error.statusCode;
+    if (statusCode == null) {
+      return _friendlyMessageText(
+        message,
+        fallback: fallback ?? l10n.authCareServicesUnavailable,
+      );
+    }
+    return switch (statusCode) {
+      400 => message.isEmpty
+          ? l10n.authSomeDetailsNeedChecking
+          : '${l10n.authSomeDetailsNeedChecking}\n$message',
+      401 => l10n.authCannotSignIn,
+      403 => lower.contains('web dashboard') ? message : l10n.authNoPermission,
+      404 => l10n.authActionUnavailable,
+      >= 500 => l10n.authTryAgainSoon,
+      _ =>
+        _friendlyMessageText(message, fallback: fallback ?? l10n.genericError),
+    };
+  }
+
+  return _friendlyMessageText(
+    _cleanBackendMessage(error.toString()),
+    fallback: fallback ?? l10n.genericError,
+  );
 }
 
 String _friendlyMessageText(String message, {String? fallback}) {
@@ -188,7 +210,7 @@ String _friendlyMessageText(String message, {String? fallback}) {
       lower.contains('xmlhttprequest') ||
       lower.contains('timed out') ||
       lower.contains('timeout')) {
-    return 'We could not reach the backend. Check that the server is running and try again.';
+    return 'We could not reach care services. Check your internet or try again shortly.';
   }
 
   if (lower.contains('forbidden') || lower.contains('permission')) {
@@ -196,7 +218,7 @@ String _friendlyMessageText(String message, {String? fallback}) {
   }
 
   if (lower.contains('not found') || lower.contains('404')) {
-    return 'The backend route for this action was not found.';
+    return 'This action is not available yet. Please check setup or contact support.';
   }
 
   if (message.isNotEmpty && !message.startsWith('Exception:')) {
@@ -204,4 +226,13 @@ String _friendlyMessageText(String message, {String? fallback}) {
   }
 
   return fallback ?? 'Something went wrong. Please try again.';
+}
+
+String _cleanBackendMessage(String message) {
+  return message
+      .replaceAll(RegExp('backend', caseSensitive: false), 'care services')
+      .replaceAll(RegExp('endpoint', caseSensitive: false), 'action')
+      .replaceAll(RegExp('server error', caseSensitive: false), 'service issue')
+      .replaceAll(RegExp(r'^ApiException\(\d+\):\s*'), '')
+      .trim();
 }

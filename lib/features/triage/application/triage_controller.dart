@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repair_ai/core/network/backend_services.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
@@ -58,20 +60,6 @@ class TriageController {
       final Map<String, dynamic> data => data['id'] as int?,
       _ => visit['id'] as int?,
     };
-    int? persistedTriageId;
-
-    if (visitId != null) {
-      try {
-        final persisted = await triageApi.runTriage(visitId);
-        final persistedResult = persisted['result'];
-        if (persistedResult is Map<String, dynamic>) {
-          persistedTriageId = persistedResult['id'] as int?;
-        }
-      } catch (_) {
-        persistedTriageId = null;
-      }
-    }
-
     final data = await triageApi.deepseekAnalyze({
       'pregnancy_status': 'currently pregnant',
       'gestation_weeks': _gestationBucket(draft.gestationalAge),
@@ -85,10 +73,39 @@ class TriageController {
     final result = _resultFromBackend(
       data,
       l10n,
-      backendTriageId: persistedTriageId,
+      backendTriageId: null,
     );
     _ref.read(triageResultProvider.notifier).state = result;
+    if (visitId != null) {
+      unawaited(_persistBackendTriage(visitId, result));
+    }
     return result;
+  }
+
+  Future<void> _persistBackendTriage(
+      int visitId, TriageResult shownResult) async {
+    try {
+      final persisted = await _ref.read(triageApiProvider).runTriage(visitId);
+      final persistedResult = persisted['result'];
+      final persistedTriageId = persistedResult is Map<String, dynamic>
+          ? persistedResult['id'] as int?
+          : null;
+      if (persistedTriageId == null) return;
+      final current = _ref.read(triageResultProvider);
+      if (current != shownResult) return;
+      _ref.read(triageResultProvider.notifier).state = TriageResult(
+        riskLevel: shownResult.riskLevel,
+        confidence: shownResult.confidence,
+        reasons: shownResult.reasons,
+        recommendation: shownResult.recommendation,
+        urgencyHours: shownResult.urgencyHours,
+        needsReferral: shownResult.needsReferral,
+        aiScreened: shownResult.aiScreened,
+        backendTriageId: persistedTriageId,
+      );
+    } catch (_) {
+      // The user-facing DeepSeek result is already shown; persistence can retry later.
+    }
   }
 
   TriageResult runLocalFallbackAssessment({
@@ -139,8 +156,10 @@ class TriageController {
   }
 
   TriageResult _resultFromBackend(
-      Map<String, dynamic> data, AppLocalizations l10n,
-      {int? backendTriageId}) {
+    Map<String, dynamic> data,
+    AppLocalizations l10n, {
+    int? backendTriageId,
+  }) {
     final level = switch ('${data['risk_level']}'.toLowerCase()) {
       'high' => RiskLevel.high,
       'moderate' => RiskLevel.moderate,
@@ -160,7 +179,7 @@ class TriageController {
       riskLevel: level,
       confidence: level == RiskLevel.high ? 0.92 : 0.86,
       reasons: [
-        'Backend AI screening reviewed your symptoms.',
+        l10n.aiScreeningReferralChecked,
         if (needsReferral) 'Referral support may be needed.',
         if (urgency.isNotEmpty && urgency != 'null') 'Urgency: $urgency.',
       ],

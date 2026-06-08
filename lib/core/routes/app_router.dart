@@ -4,13 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/onboarding_provider.dart';
 import 'package:repair_ai/core/widgets/loading_error_state.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
+import 'package:repair_ai/features/auth/presentation/controllers/login_profile_providers.dart';
 import 'package:repair_ai/features/anc/domain/anc_profile.dart';
 import 'package:repair_ai/features/anc/presentation/screens/anc_profile_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/auth_entry_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/change_password_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/chp_sign_in_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/create_account_screen.dart';
-import 'package:repair_ai/features/auth/presentation/screens/otp_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/recover_account_screen.dart';
 import 'package:repair_ai/features/care/presentation/screens/care_screen.dart';
 import 'package:repair_ai/features/medication_tracking/presentation/screens/medication_tracking_screen.dart';
@@ -43,8 +43,6 @@ bool isPublicRoute(String path) {
       path == '/auth/sign-in' ||
       path == '/auth/chp' ||
       path == '/auth/create-account' ||
-      path == '/auth/otp' ||
-      path == '/auth/demo' ||
       path == '/auth/recover' ||
       path == '/login/transition';
 }
@@ -75,6 +73,7 @@ bool isSharedProtectedRoute(String path) {
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authSession = ref.watch(authSessionProvider);
+  final currentPatient = ref.watch(currentPatientContextProvider);
   final isLoggedIn = authSession.isLoggedIn;
   final onboardingDone = ref.watch(onboardingCompleteProvider);
   final authReady = ref.watch(authReadyProvider);
@@ -133,10 +132,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/how-it-works',
         builder: (context, state) => const HowItWorksScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/auth',
         builder: (context, state) => const AuthEntryScreen(),
@@ -152,14 +148,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/create-account',
         builder: (context, state) => const CreateAccountScreen(),
-      ),
-      GoRoute(
-        path: '/auth/otp',
-        builder: (context, state) => const OtpScreen(),
-      ),
-      GoRoute(
-        path: '/auth/demo',
-        builder: (context, state) => const OtpScreen(isDemoMode: true),
       ),
       GoRoute(
         path: '/auth/recover',
@@ -195,15 +183,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/referral',
         builder: (context, state) => const ReferralScreen(),
       ),
-      GoRoute(
-        path: '/care',
-        builder: (context, state) => const CareScreen(),
-      ),
+      GoRoute(path: '/care', builder: (context, state) => const CareScreen()),
       GoRoute(
         path: '/care/anc-profile',
-        builder: (context, state) => const AncProfileScreen(
+        builder: (context, state) => AncProfileScreen(
           mode: AncProfileMode.patientReadOnly,
-          patientId: 'current-patient',
+          patientId: currentPatient?.storageKey ?? 'current-patient',
         ),
       ),
       GoRoute(
@@ -242,7 +227,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             mode: canUseProviderMode
                 ? MedicationTrackingMode.providerManage
                 : MedicationTrackingMode.patientReadOnly,
-            patientId: query['patientId'] ?? 'current-patient',
+            patientId:
+                query['patientId'] ??
+                currentPatient?.storageKey ??
+                'current-patient',
             patientName: query['patientName'],
           );
         },

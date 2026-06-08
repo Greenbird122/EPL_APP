@@ -23,10 +23,7 @@ class ConstrainedPage extends StatelessWidget {
       alignment: alignment,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: resolvedMaxWidth),
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
+        child: Padding(padding: padding, child: child),
       ),
     );
   }

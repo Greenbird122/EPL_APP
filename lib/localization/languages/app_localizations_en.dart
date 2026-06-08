@@ -263,6 +263,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get worksOffline => 'Works offline';
 
   @override
+  String get onlineStatus => 'Online';
+
+  @override
+  String get noInternetConnection => 'No internet connection';
+
+  @override
   String get lastReport => 'Last report';
 
   @override
@@ -409,6 +415,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get onboarding4Description =>
       'Made with love for Kenyan mothers and community health workers';
+
+  @override
+  String get onboardingPromiseAi => 'AI risk screening';
+
+  @override
+  String get onboardingPromiseReferral => 'Verified referrals';
+
+  @override
+  String get onboardingPromiseFollowUp => 'Care follow-up';
+
+  @override
+  String get onboardingPromiseKenya => 'Built for Kenya';
 
   @override
   String get featureAiTriage => 'Risk Screening';
@@ -669,7 +687,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changePassword => 'Change password';
 
   @override
-  String get changePasswordSubtitle => 'Update your backend account password';
+  String get changePasswordSubtitle => 'Updating your account password...';
 
   @override
   String get whatsAppMessage =>
@@ -688,6 +706,121 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chooseAccessSubtitle =>
       'Choose how you want to access pregnancy support today.';
+
+  @override
+  String get carePassportBadge => 'Your care starts here';
+
+  @override
+  String get authPrivateChip => 'Private';
+
+  @override
+  String get authBackendReadyChip => 'Care-ready';
+
+  @override
+  String get authUssdChip => 'USSD *384#';
+
+  @override
+  String get signInActionSubtitle => 'Use your registered account';
+
+  @override
+  String get usernameCareIdLabel => 'Username / care ID';
+
+  @override
+  String get usernameCareIdHelper =>
+      'Use the username created for your account.';
+
+  @override
+  String get usernameCareIdRequired => 'Enter your username or care ID.';
+
+  @override
+  String get usernameCareIdNoSpaces => 'Username cannot contain spaces.';
+
+  @override
+  String get usernameCreateHelper =>
+      'Used only to sign in; choose something easy to remember.';
+
+  @override
+  String get signInPhoneLabel => 'Phone number';
+
+  @override
+  String get signInPhoneHelper => 'Use the phone number registered for care.';
+
+  @override
+  String get signInPhoneRequired => 'Enter your phone number.';
+
+  @override
+  String get signInPhoneInvalid =>
+      'Enter a valid Kenyan phone number, for example 0712000001.';
+
+  @override
+  String get rememberMe => 'Remember me';
+
+  @override
+  String get rememberMePatientSubtitle => 'Keep me signed in on this device.';
+
+  @override
+  String get rememberMeStaffSubtitle =>
+      'Keep this staff session on this device.';
+
+  @override
+  String get authSigningInStatus => 'Signing you in securely...';
+
+  @override
+  String get authSignedInStatus => 'You’re signed in. Opening your care space.';
+
+  @override
+  String get authCreatingAccountStatus => 'Creating your account...';
+
+  @override
+  String get authAccountCreatedStatus =>
+      'Account created. Setting up your care space.';
+
+  @override
+  String get authCheckingStaffStatus => 'Checking staff access...';
+
+  @override
+  String get authStaffSignedInStatus => 'Staff access confirmed.';
+
+  @override
+  String get authSomeDetailsNeedChecking => 'Some details need checking.';
+
+  @override
+  String get authCannotSignIn =>
+      'We could not sign you in. Check your phone number and password.';
+
+  @override
+  String get authNoPermission =>
+      'This account is not allowed to use this part of the app.';
+
+  @override
+  String get authActionUnavailable =>
+      'This action is not available yet. Please check setup or contact support.';
+
+  @override
+  String get authCareServicesUnavailable =>
+      'We could not reach care services. Check your internet or try again shortly.';
+
+  @override
+  String get authTryAgainSoon => 'Please try again shortly.';
+
+  @override
+  String get staffIdOrUsername => 'Staff ID / username';
+
+  @override
+  String get accountDetailsSection => 'Account details';
+
+  @override
+  String get contactDetailsSection => 'Contact';
+
+  @override
+  String get securitySection => 'Security';
+
+  @override
+  String get passwordGuidanceShort =>
+      'Use 8+ characters. Avoid common or numbers-only passwords.';
+
+  @override
+  String get continueToCare => 'Continue to care';
 
   @override
   String get continueAsGuest => 'Continue as guest';
@@ -713,14 +846,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signInSubtitle =>
-      'Phone OTP is recommended for mothers. Email is available too.';
+      'Use your registered phone number and password to open your care space.';
 
   @override
   String get providerSignInTitle => 'Provider / CHP sign in';
 
   @override
   String get providerSignInSubtitle =>
-      'Authorized care teams can use email access for field workflows.';
+      'Authorized care teams can use their staff account for field workflows.';
 
   @override
   String get staffIdOrEmail => 'Staff ID or email';
@@ -755,7 +888,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createAccountIntro =>
-      'This prepares the app for real care coordination while keeping today\'s build local and backend-ready.';
+      'This prepares the app for safe care coordination.';
 
   @override
   String get careAreaLabel => 'County / care area';
@@ -788,7 +921,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recoveryInstructions =>
-      'A connected backend can send OTP or password reset instructions.';
+      'When reset support is enabled, instructions can be sent to your phone or email.';
 
   @override
   String get sendRecoveryInstructions => 'Send recovery instructions';
@@ -813,6 +946,101 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeSupportChannelsSuffix => 'Use the app, WhatsApp, or USSD.';
+
+  @override
+  String homeGreeting(String name) => 'Good ${_dayPart()}, $name';
+
+  @override
+  String get careIdentityUnknown => 'Care profile syncing';
+
+  @override
+  String get locationNotSet => 'Location not set';
+
+  @override
+  String get careCompassTitle => 'Care Compass';
+
+  @override
+  String get compassNoCheckTitle => 'Start with AI risk screening';
+
+  @override
+  String get compassCheckedTitle => 'Your last check is saved';
+
+  @override
+  String get compassReferralTitle => 'Verified care may be needed';
+
+  @override
+  String get compassFollowUpTitle => 'A care follow-up needs attention';
+
+  @override
+  String get compassStableTitle => 'Your care looks steady today';
+
+  @override
+  String get compassProfileTitle => 'Complete your care profile';
+
+  @override
+  String get compassOfflineTitle => 'Saved care is available';
+
+  @override
+  String get compassNoCheckMessage =>
+      'Tell REPAIR-AI what you are feeling. Screening is not a diagnosis, but it helps guide your next safe step.';
+
+  @override
+  String get compassCheckedMessage =>
+      'Your latest screening is saved. You can review care updates or run another check if anything changes.';
+
+  @override
+  String get compassReferralMessage =>
+      'A referral step is ready. Use verified facilities and keep support channels close.';
+
+  @override
+  String get compassFollowUpMessage =>
+      'You have follow-up activity to check. Open Care to see what needs attention.';
+
+  @override
+  String get compassStableMessage =>
+      'No urgent care signal is showing right now. Keep checking in when symptoms change.';
+
+  @override
+  String get compassProfileMessage =>
+      'Add a few care details so referrals and follow-ups can be matched better.';
+
+  @override
+  String get compassOfflineMessage =>
+      'Care services are not reachable right now. You can still use saved care, USSD, or report symptoms.';
+
+  @override
+  String get aiSignalLabel => 'AI screening';
+
+  @override
+  String get referralSignalLabel => 'Referral';
+
+  @override
+  String get followUpSignalLabel => 'Follow-up';
+
+  @override
+  String get signalReady => 'Ready';
+
+  @override
+  String get signalNeedsAttention => 'Check';
+
+  @override
+  String get signalUrgent => 'Urgent';
+
+  @override
+  String get signalComplete => 'Done';
+
+  @override
+  String get signalSaved => 'Saved';
+
+  @override
+  String get signalNotYet => 'Not yet';
+
+  @override
+  String get homeSupportStripTitle => 'Need help quickly?';
+
+  @override
+  String get homeSupportStripSubtitle =>
+      'Use WhatsApp, USSD, or emergency calling when you need support.';
 
   @override
   String get todayCareTitle => 'Today\'s Care';
@@ -1073,7 +1301,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backendOfflineMessage =>
-      'Backend services are not connected yet. Local reports remain available.';
+      'Care services are not reachable right now. Saved reports remain available.';
 
   @override
   String get backendConnectedTitle => 'Connected to care services';
@@ -1191,7 +1419,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiAssistedScreening => 'AI-assisted screening';
 
   @override
+  String get guidedAiCheck => 'Guided AI check';
+
+  @override
+  String get guidedAiCheckTitle => 'Tell us what is happening';
+
+  @override
+  String get guidedAiCheckSubtitle =>
+      'AI screening uses your symptoms and description to estimate risk and referral need. It supports care decisions; it is not a diagnosis.';
+
+  @override
+  String get describeSymptomsNaturally => 'Describe it in your own words';
+
+  @override
+  String get describeSymptomsNaturallyHint =>
+      'You can type or speak. Mention bleeding, pain, dizziness, fever, movement changes, or anything that worries you.';
+
+  @override
+  String get triageTextMode => 'Text';
+
+  @override
+  String get triageTextModeSubtitle => 'Type symptoms in your own words.';
+
+  @override
+  String get triageVoiceRecordingMode => 'Voice recording';
+
+  @override
+  String get triageVoiceRecordingSubtitle =>
+      'Record symptoms and let REPAIR-AI transcribe them.';
+
+  @override
+  String get triageVoiceCallMode => 'Call voice assistant';
+
+  @override
+  String get triageVoiceCallSubtitle =>
+      'Call the REPAIR-AI voice line when it is available.';
+
+  @override
+  String get startVoiceRecording => 'Start recording';
+
+  @override
+  String get stopVoiceRecording => 'Stop and transcribe';
+
+  @override
+  String get transcribingVoice => 'Transcribing your voice...';
+
+  @override
+  String get voiceRecordingReady =>
+      'Voice transcript is ready. Review it before AI screening.';
+
+  @override
+  String get voiceRecordingUnavailable =>
+      'Voice recording is not ready yet. You can type your symptoms.';
+
+  @override
+  String get voiceAssistantUnavailable =>
+      'The voice assistant number is not set up yet. You can type or record symptoms here.';
+
+  @override
+  String get callRepairAiVoiceAssistant => 'Call REPAIR-AI voice assistant';
+
+  @override
+  String get aiReady => 'AI ready';
+
+  @override
+  String get aiUnavailable => 'AI unavailable';
+
+  @override
+  String get aiTimedOut => 'AI took too long';
+
+  @override
+  String get aiReadinessChecking => 'Checking AI';
+
+  @override
   String get localSafetyScreening => 'Local safety screening';
+
+  @override
+  String get localSafetyFallback => 'Local safety fallback';
+
+  @override
+  String get patientStatedAge => 'Patient-stated age';
+
+  @override
+  String get ageNotProvided =>
+      'Age was not provided. We will not guess it from symptoms.';
+
+  @override
+  String get noAgeGuessingSafety =>
+      'If you mention your age, we treat it as patient-stated context. The app does not guess age from symptoms.';
 
   @override
   String get useLocalSafetyScreening => 'Use local safety screening';
@@ -1209,6 +1524,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get symptomStartQuestion => 'When did this start?';
+
+  @override
+  String get symptomSeverityMild => 'Mild';
+
+  @override
+  String get symptomSeverityModerate => 'Moderate';
+
+  @override
+  String get symptomSeveritySevere => 'Severe';
+
+  @override
+  String get symptomDurationToday => 'Today';
+
+  @override
+  String get symptomDurationTwoDays => '1-2 days';
+
+  @override
+  String get symptomDurationThreePlus => '3+ days';
 
   @override
   String get screeningSafetyCopy =>
@@ -1240,4 +1573,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ancContextForRisk =>
       'ANC context considered alongside this screening';
+}
+
+String _dayPart() {
+  final hour = DateTime.now().hour;
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
 }

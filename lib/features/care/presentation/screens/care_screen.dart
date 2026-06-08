@@ -56,10 +56,7 @@ class CareScreen extends ConsumerWidget {
 }
 
 class _CareBody extends StatelessWidget {
-  const _CareBody({
-    required this.state,
-    this.onRefresh,
-  });
+  const _CareBody({required this.state, this.onRefresh});
 
   final CareFeedState state;
   final Future<void> Function()? onRefresh;
@@ -111,7 +108,9 @@ class _CareBody extends StatelessWidget {
                   if (state.backendReports.isNotEmpty)
                     ...state.backendReports.take(2).map(_BackendReportTile.new)
                   else if (state.localReports.isNotEmpty)
-                    ...state.localReports.reversed.take(2).map(
+                    ...state.localReports.reversed
+                        .take(2)
+                        .map(
                           (report) => _SimpleCareTile(
                             icon: Icons.medical_services_outlined,
                             title: report.riskLevel.toUpperCase(),
@@ -134,7 +133,9 @@ class _CareBody extends StatelessWidget {
                   if (state.referrals.isEmpty)
                     _EmptyCareTile(message: l10n.myReferralsSubtitle)
                   else
-                    ...state.referrals.take(2).map(
+                    ...state.referrals
+                        .take(2)
+                        .map(
                           (item) => _SimpleCareTile(
                             icon: Icons.alt_route_outlined,
                             title: '${item['status'] ?? l10n.pending}',
@@ -153,7 +154,9 @@ class _CareBody extends StatelessWidget {
                   if (state.followUps.isEmpty)
                     _EmptyCareTile(message: l10n.noFollowUpsYet)
                   else
-                    ...state.followUps.take(2).map(
+                    ...state.followUps
+                        .take(2)
+                        .map(
                           (item) => _SimpleCareTile(
                             icon: Icons.schedule_outlined,
                             title: '${item['due_date'] ?? l10n.pending}',
@@ -173,7 +176,9 @@ class _CareBody extends StatelessWidget {
                   if (state.prescriptions.isEmpty)
                     _EmptyCareTile(message: l10n.noPrescriptionsYet)
                   else
-                    ...state.prescriptions.take(2).map(
+                    ...state.prescriptions
+                        .take(2)
+                        .map(
                           (item) => _SimpleCareTile(
                             icon: Icons.medication_outlined,
                             title:
@@ -192,7 +197,9 @@ class _CareBody extends StatelessWidget {
                   if (state.alerts.isEmpty)
                     _EmptyCareTile(message: l10n.noAlertsYet)
                   else
-                    ...state.alerts.take(2).map(
+                    ...state.alerts
+                        .take(2)
+                        .map(
                           (item) => _SimpleCareTile(
                             icon: Icons.warning_amber_outlined,
                             title: '${item['flag'] ?? l10n.careAlerts}',
@@ -225,9 +232,7 @@ class _AncCareSection extends ConsumerWidget {
         icon: Icons.assignment_turned_in_outlined,
         actionLabel: 'Open',
         onAction: () => context.push('/care/anc-profile'),
-        children: [
-          _EmptyCareTile(message: l10n.ancProfileEmpty),
-        ],
+        children: [_EmptyCareTile(message: l10n.ancProfileEmpty)],
       ),
       data: (profile) {
         final flags = profile?.contextFlags ?? const [];
@@ -240,7 +245,9 @@ class _AncCareSection extends ConsumerWidget {
             if (profile == null || profile.isEmpty)
               _EmptyCareTile(message: l10n.ancProfileEmpty)
             else if (flags.isNotEmpty)
-              ...flags.take(3).map(
+              ...flags
+                  .take(3)
+                  .map(
                     (flag) => _SimpleCareTile(
                       icon: flag.severity.name == 'urgent'
                           ? Icons.warning_amber_outlined
@@ -405,10 +412,7 @@ class _CareNoticeCard extends StatelessWidget {
 }
 
 class _ProfileCompletionCard extends StatelessWidget {
-  const _ProfileCompletionCard({
-    required this.state,
-    required this.onTap,
-  });
+  const _ProfileCompletionCard({required this.state, required this.onTap});
 
   final ProfileCompletionState state;
   final VoidCallback onTap;
@@ -424,8 +428,10 @@ class _ProfileCompletionCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.assignment_ind_outlined,
-                    color: AppTheme.primary),
+                const Icon(
+                  Icons.assignment_ind_outlined,
+                  color: AppTheme.primary,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -589,11 +595,7 @@ class _SimpleCareTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
-      subtitle: Text(
-        subtitle,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
+      subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
     );
   }
 }

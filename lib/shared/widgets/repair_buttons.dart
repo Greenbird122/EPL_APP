@@ -79,9 +79,7 @@ class RepairOutlinedButton extends StatelessWidget {
         foregroundColor: AppTheme.primary,
         minimumSize: const Size.fromHeight(52),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

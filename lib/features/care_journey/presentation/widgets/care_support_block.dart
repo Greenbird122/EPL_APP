@@ -28,10 +28,7 @@ class CareSupportBlock extends StatelessWidget {
                   color: AppTheme.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.support_agent,
-                  color: AppTheme.primary,
-                ),
+                child: const Icon(Icons.support_agent, color: AppTheme.primary),
               ),
               const SizedBox(width: 10),
               Expanded(

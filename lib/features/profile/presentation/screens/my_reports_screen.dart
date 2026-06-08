@@ -119,10 +119,7 @@ class MyReportsScreen extends ConsumerWidget {
               ),
               if (report.notes.isNotEmpty) ...[
                 const SizedBox(height: 10),
-                Text(
-                  report.notes,
-                  style: const TextStyle(height: 1.4),
-                ),
+                Text(report.notes, style: const TextStyle(height: 1.4)),
               ],
               const SizedBox(height: 16),
               Text(
@@ -145,9 +142,7 @@ class MyReportsScreen extends ConsumerWidget {
                 label: 'Export / share report',
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Report export queued.'),
-                    ),
+                    const SnackBar(content: Text('Report export queued.')),
                   );
                 },
               ),
@@ -237,8 +232,9 @@ class MyReportsScreen extends ConsumerWidget {
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: _riskColor(report.riskLevel)
-                            .withValues(alpha: 0.15),
+                        backgroundColor: _riskColor(
+                          report.riskLevel,
+                        ).withValues(alpha: 0.15),
                         child: Icon(
                           Icons.medical_services,
                           color: _riskColor(report.riskLevel),

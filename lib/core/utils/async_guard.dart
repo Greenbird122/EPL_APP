@@ -17,9 +17,6 @@ Future<T> runWithMinimumDuration<T>(
   Future<T> Function() action, {
   Duration minimum = const Duration(seconds: 5),
 }) async {
-  final results = await Future.wait([
-    action(),
-    Future<void>.delayed(minimum),
-  ]);
+  final results = await Future.wait([action(), Future<void>.delayed(minimum)]);
   return results.first as T;
 }

@@ -7,10 +7,7 @@ import 'package:repair_ai/features/medication_tracking/domain/medication_model.d
 import 'package:repair_ai/features/medication_tracking/presentation/controllers/medication_registry_controller.dart';
 import 'package:repair_ai/shared/widgets/responsive_page.dart';
 
-enum MedicationTrackingMode {
-  patientReadOnly,
-  providerManage,
-}
+enum MedicationTrackingMode { patientReadOnly, providerManage }
 
 class MedicationTrackingScreen extends ConsumerWidget {
   const MedicationTrackingScreen({
@@ -126,9 +123,9 @@ class _MedicationEntryFormViewState
     } catch (error) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
       return;
     }
     if (!mounted) return;
@@ -149,9 +146,9 @@ class _MedicationEntryFormViewState
     final viewInsets = MediaQuery.viewInsetsOf(context);
     return SingleChildScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: RepairInsets.page(context).copyWith(
-        bottom: viewInsets.bottom + 24,
-      ),
+      padding: RepairInsets.page(
+        context,
+      ).copyWith(bottom: viewInsets.bottom + 24),
       child: ResponsivePageShell(
         maxWidth: RepairSizing.formMaxWidth(context),
         child: Form(
@@ -162,8 +159,8 @@ class _MedicationEntryFormViewState
               Text(
                 'Register issued medicine',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -347,8 +344,8 @@ class MedicationCard extends StatelessWidget {
     final progressColor = completed
         ? AppTheme.error
         : medication.remainingFraction <= 0.25
-            ? AppTheme.warning
-            : AppTheme.success;
+        ? AppTheme.warning
+        : AppTheme.success;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -520,10 +517,7 @@ class _StatusBadge extends StatelessWidget {
 }
 
 class _EmptyMedicationState extends StatelessWidget {
-  const _EmptyMedicationState({
-    required this.canManage,
-    this.patientName,
-  });
+  const _EmptyMedicationState({required this.canManage, this.patientName});
 
   final bool canManage;
   final String? patientName;
@@ -538,7 +532,8 @@ class _EmptyMedicationState extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(
-                  height: RepairBreakpoints.isShortScreen(context) ? 28 : 72),
+                height: RepairBreakpoints.isShortScreen(context) ? 28 : 72,
+              ),
               Icon(
                 Icons.inventory_2_outlined,
                 size: 72,
@@ -550,9 +545,9 @@ class _EmptyMedicationState extends StatelessWidget {
                     ? 'No medication has been registered for this patient yet.'
                     : 'No medicine has been registered for you yet.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(

@@ -189,10 +189,7 @@ class _AncProfileScreenState extends ConsumerState<AncProfileScreen> {
 }
 
 class _AncIntroCard extends StatelessWidget {
-  const _AncIntroCard({
-    required this.canManage,
-    required this.isEmpty,
-  });
+  const _AncIntroCard({required this.canManage, required this.isEmpty});
 
   final bool canManage;
   final bool isEmpty;
@@ -207,18 +204,22 @@ class _AncIntroCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.assignment_turned_in_outlined,
-                color: AppTheme.primary),
+            const Icon(
+              Icons.assignment_turned_in_outlined,
+              color: AppTheme.primary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 canManage
                     ? 'Record verified ANC special-case details for this mother. Patients can view this, but cannot edit it.'
                     : isEmpty
-                        ? l10n.ancProfileEmpty
-                        : l10n.ancProfileRecordedByCareTeam,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w800, height: 1.35),
+                    ? l10n.ancProfileEmpty
+                    : l10n.ancProfileRecordedByCareTeam,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
               ),
             ),
           ],
@@ -273,11 +274,17 @@ class _AncForm extends StatelessWidget {
             _Field(controller: anaemiaStatus, label: 'Anaemia status'),
             _Field(controller: bpConcern, label: 'BP concern'),
             _Field(
-                controller: proteinuriaConcern, label: 'Proteinuria concern'),
+              controller: proteinuriaConcern,
+              label: 'Proteinuria concern',
+            ),
             _SensitiveField(
-                controller: hivStatus, label: 'HIV screening status'),
+              controller: hivStatus,
+              label: 'HIV screening status',
+            ),
             _SensitiveField(
-                controller: syphilisStatus, label: 'Syphilis screening status'),
+              controller: syphilisStatus,
+              label: 'Syphilis screening status',
+            ),
             _Field(controller: malariaIptp, label: 'Malaria / IPTp status'),
             _Field(
               controller: previousComplications,
@@ -285,7 +292,10 @@ class _AncForm extends StatelessWidget {
               minLines: 2,
             ),
             _Field(
-                controller: nextAction, label: 'Next ANC action', minLines: 2),
+              controller: nextAction,
+              label: 'Next ANC action',
+              minLines: 2,
+            ),
             _Field(controller: notes, label: 'Notes', minLines: 2),
           ],
         ),
@@ -320,10 +330,7 @@ class _Field extends StatelessWidget {
 }
 
 class _SensitiveField extends StatelessWidget {
-  const _SensitiveField({
-    required this.controller,
-    required this.label,
-  });
+  const _SensitiveField({required this.controller, required this.label});
 
   final TextEditingController controller;
   final String label;
@@ -356,9 +363,7 @@ class _SensitiveField extends StatelessWidget {
           const SizedBox(height: 8),
           TextField(
             controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Verified status',
-            ),
+            decoration: const InputDecoration(labelText: 'Verified status'),
           ),
         ],
       ),
@@ -380,11 +385,11 @@ class _AncReadOnlyProfile extends StatelessWidget {
       ('Antibody screen', profile.antibodyScreenStatus),
       (
         'Haemoglobin / anaemia',
-        _join(profile.haemoglobin, profile.anaemiaStatus)
+        _join(profile.haemoglobin, profile.anaemiaStatus),
       ),
       (
         'BP / proteinuria',
-        _join(profile.bpConcern, profile.proteinuriaConcern)
+        _join(profile.bpConcern, profile.proteinuriaConcern),
       ),
       ('HIV screening', profile.hivScreeningStatus),
       ('Syphilis screening', profile.syphilisScreeningStatus),
@@ -428,10 +433,7 @@ class _AncReadOnlyProfile extends StatelessWidget {
 }
 
 class _AncStatusRow extends StatelessWidget {
-  const _AncStatusRow({
-    required this.label,
-    required this.value,
-  });
+  const _AncStatusRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -475,10 +477,7 @@ class _AncError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(message),
-      ),
+      child: Padding(padding: const EdgeInsets.all(24), child: Text(message)),
     );
   }
 }

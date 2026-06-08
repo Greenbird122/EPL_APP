@@ -27,12 +27,15 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final filtered = _filter == 'all'
         ? cases
         : cases.where((item) => item.risk.name == _filter).toList();
-    final highCount =
-        cases.where((item) => item.risk == ProviderCaseRisk.high).length;
+    final highCount = cases
+        .where((item) => item.risk == ProviderCaseRisk.high)
+        .length;
     final pendingCount = cases
-        .where((item) =>
-            item.referralStatus == ProviderReferralStatus.pending ||
-            item.referralStatus == ProviderReferralStatus.sent)
+        .where(
+          (item) =>
+              item.referralStatus == ProviderReferralStatus.pending ||
+              item.referralStatus == ProviderReferralStatus.sent,
+        )
         .length;
 
     return DefaultTabController(
@@ -114,9 +117,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 }
 
 void _showStatusSnack(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _ProviderCasesTab extends StatelessWidget {
@@ -160,9 +161,9 @@ class _ProviderCasesTab extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               l10n.caseQueue,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             if (filtered.isEmpty)
@@ -229,10 +230,9 @@ class _ProviderTasksTab extends StatelessWidget {
           children: [
             Text(
               'Maternal follow-up tasks',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             if (visibleTasks.isEmpty)
@@ -320,14 +320,16 @@ class _ProviderPerformanceTab extends StatelessWidget {
     final highRisk = cases.where((item) => item.risk == ProviderCaseRisk.high);
     final followedUp = cases
         .where(
-            (item) => item.followUpStatus == ProviderFollowUpStatus.completed)
+          (item) => item.followUpStatus == ProviderFollowUpStatus.completed,
+        )
         .length;
     final prescriptions = cases
         .where((item) => !item.medicationStatus.toLowerCase().contains('no '))
         .length;
     final pending = cases
         .where(
-            (item) => item.followUpStatus != ProviderFollowUpStatus.completed)
+          (item) => item.followUpStatus != ProviderFollowUpStatus.completed,
+        )
         .length;
 
     return SingleChildScrollView(
@@ -338,10 +340,9 @@ class _ProviderPerformanceTab extends StatelessWidget {
           children: [
             Text(
               'REPAIR-AI field indicators',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _PerformanceGrid(
@@ -413,10 +414,7 @@ class _ChpSectionTabs extends StatelessWidget {
         ),
         labelColor: AppTheme.primary,
         unselectedLabelColor: Colors.white,
-        labelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-        ),
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
         unselectedLabelStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w800,
@@ -428,10 +426,7 @@ class _ChpSectionTabs extends StatelessWidget {
 }
 
 class _ChpTabLabel extends StatelessWidget {
-  const _ChpTabLabel({
-    required this.icon,
-    required this.label,
-  });
+  const _ChpTabLabel({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -449,11 +444,7 @@ class _ChpTabLabel extends StatelessWidget {
             Icon(icon, size: 18),
             const SizedBox(width: 6),
             Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -755,11 +746,7 @@ class _ProviderHeader extends StatelessWidget {
           if (compact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                avatar,
-                const SizedBox(height: 12),
-                content,
-              ],
+              children: [avatar, const SizedBox(height: 12), content],
             );
           }
 
@@ -929,10 +916,7 @@ class _CaseCardState extends State<_CaseCard> {
               widget.item.symptoms,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -1114,35 +1098,21 @@ class _CaseActionMenu extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'referral',
-          child: Text(l10n.followReferral),
-        ),
+        PopupMenuItem(value: 'referral', child: Text(l10n.followReferral)),
         PopupMenuItem(
           value: 'contacted',
           enabled: !contacted,
           child: Text(l10n.markContacted),
         ),
-        PopupMenuItem(
-          value: 'medication',
-          child: Text(l10n.drugRegistry),
-        ),
-        const PopupMenuItem(
-          value: 'anc',
-          child: Text('ANC profile'),
-        ),
-        PopupMenuItem(
-          value: 'triage',
-          child: Text(l10n.startWithSymptomCheck),
-        ),
+        PopupMenuItem(value: 'medication', child: Text(l10n.drugRegistry)),
+        const PopupMenuItem(value: 'anc', child: Text('ANC profile')),
+        PopupMenuItem(value: 'triage', child: Text(l10n.startWithSymptomCheck)),
       ],
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: AppTheme.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: AppTheme.primary.withValues(alpha: 0.24),
-          ),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.24)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
@@ -1189,11 +1159,7 @@ class _CompactCaseActionButton extends StatelessWidget {
     return FilledButton.tonalIcon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
-      label: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       style: FilledButton.styleFrom(
         minimumSize: const Size(0, 40),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

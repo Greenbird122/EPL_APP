@@ -23,26 +23,27 @@ class AnalysisStepIndicator extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor:
-                    done || active ? AppTheme.primary : Colors.grey.shade300,
+                backgroundColor: done || active
+                    ? AppTheme.primary
+                    : Colors.grey.shade300,
                 child: done
                     ? const Icon(Icons.check, size: 16, color: Colors.white)
                     : active
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

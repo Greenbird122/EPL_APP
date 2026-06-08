@@ -27,10 +27,7 @@ abstract class AppLocalizations {
 
   static AppLocalizations of(BuildContext context) {
     // AppLocalizations is not a Flutter widget; it's stored in Localizations.
-    final loc = Localizations.of<AppLocalizations>(
-      context,
-      AppLocalizations,
-    );
+    final loc = Localizations.of<AppLocalizations>(context, AppLocalizations);
     // During early startup (e.g. hot restart), delegates might not be
     // resolved yet. Fall back to English rather than crashing.
     return loc ??
@@ -150,6 +147,8 @@ abstract class AppLocalizations {
   String get yourPregnancyMatters;
   String get reportSymptomsEarly;
   String get worksOffline;
+  String get onlineStatus;
+  String get noInternetConnection;
   String get lastReport;
   String get viewReport;
   String get goNowUrgency;
@@ -199,6 +198,10 @@ abstract class AppLocalizations {
   String get onboarding3Description;
   String get onboarding4Title;
   String get onboarding4Description;
+  String get onboardingPromiseAi;
+  String get onboardingPromiseReferral;
+  String get onboardingPromiseFollowUp;
+  String get onboardingPromiseKenya;
 
   String get featureAiTriage;
   String get featureGisReferrals;
@@ -300,6 +303,41 @@ abstract class AppLocalizations {
   String get medicationTrackerSubtitle;
 
   String get chooseAccessSubtitle;
+  String get carePassportBadge;
+  String get authPrivateChip;
+  String get authBackendReadyChip;
+  String get authUssdChip;
+  String get signInActionSubtitle;
+  String get usernameCareIdLabel;
+  String get usernameCareIdHelper;
+  String get usernameCareIdRequired;
+  String get usernameCareIdNoSpaces;
+  String get usernameCreateHelper;
+  String get signInPhoneLabel;
+  String get signInPhoneHelper;
+  String get signInPhoneRequired;
+  String get signInPhoneInvalid;
+  String get rememberMe;
+  String get rememberMePatientSubtitle;
+  String get rememberMeStaffSubtitle;
+  String get authSigningInStatus;
+  String get authSignedInStatus;
+  String get authCreatingAccountStatus;
+  String get authAccountCreatedStatus;
+  String get authCheckingStaffStatus;
+  String get authStaffSignedInStatus;
+  String get authSomeDetailsNeedChecking;
+  String get authCannotSignIn;
+  String get authNoPermission;
+  String get authActionUnavailable;
+  String get authCareServicesUnavailable;
+  String get authTryAgainSoon;
+  String get staffIdOrUsername;
+  String get accountDetailsSection;
+  String get contactDetailsSection;
+  String get securitySection;
+  String get passwordGuidanceShort;
+  String get continueToCare;
   String get continueAsGuest;
   String get continueWithPhoneOtp;
   String get fastSignInSubtitle;
@@ -340,6 +378,35 @@ abstract class AppLocalizations {
   String get ussdCopied;
 
   String get homeSupportChannelsSuffix;
+  String homeGreeting(String name);
+  String get careIdentityUnknown;
+  String get locationNotSet;
+  String get careCompassTitle;
+  String get compassNoCheckTitle;
+  String get compassCheckedTitle;
+  String get compassReferralTitle;
+  String get compassFollowUpTitle;
+  String get compassStableTitle;
+  String get compassProfileTitle;
+  String get compassOfflineTitle;
+  String get compassNoCheckMessage;
+  String get compassCheckedMessage;
+  String get compassReferralMessage;
+  String get compassFollowUpMessage;
+  String get compassStableMessage;
+  String get compassProfileMessage;
+  String get compassOfflineMessage;
+  String get aiSignalLabel;
+  String get referralSignalLabel;
+  String get followUpSignalLabel;
+  String get signalReady;
+  String get signalNeedsAttention;
+  String get signalUrgent;
+  String get signalComplete;
+  String get signalSaved;
+  String get signalNotYet;
+  String get homeSupportStripTitle;
+  String get homeSupportStripSubtitle;
   String get todayCareTitle;
   String get todayCareSavedTitle;
   String get todayCareEmptyTitle;
@@ -456,12 +523,44 @@ abstract class AppLocalizations {
   String get reviewForAiScreening;
   String get runAiRiskScreening;
   String get aiAssistedScreening;
+  String get guidedAiCheck;
+  String get guidedAiCheckTitle;
+  String get guidedAiCheckSubtitle;
+  String get describeSymptomsNaturally;
+  String get describeSymptomsNaturallyHint;
+  String get triageTextMode;
+  String get triageTextModeSubtitle;
+  String get triageVoiceRecordingMode;
+  String get triageVoiceRecordingSubtitle;
+  String get triageVoiceCallMode;
+  String get triageVoiceCallSubtitle;
+  String get startVoiceRecording;
+  String get stopVoiceRecording;
+  String get transcribingVoice;
+  String get voiceRecordingReady;
+  String get voiceRecordingUnavailable;
+  String get voiceAssistantUnavailable;
+  String get callRepairAiVoiceAssistant;
+  String get aiReady;
+  String get aiUnavailable;
+  String get aiTimedOut;
+  String get aiReadinessChecking;
   String get localSafetyScreening;
+  String get localSafetyFallback;
+  String get patientStatedAge;
+  String get ageNotProvided;
+  String get noAgeGuessingSafety;
   String get useLocalSafetyScreening;
   String get aiServiceUnavailable;
   String get patientProfileRequiredForAi;
   String get symptomStrengthQuestion;
   String get symptomStartQuestion;
+  String get symptomSeverityMild;
+  String get symptomSeverityModerate;
+  String get symptomSeveritySevere;
+  String get symptomDurationToday;
+  String get symptomDurationTwoDays;
+  String get symptomDurationThreePlus;
   String get screeningSafetyCopy;
   String get ancSpecialCases;
   String get ancSpecialCasesSubtitle;

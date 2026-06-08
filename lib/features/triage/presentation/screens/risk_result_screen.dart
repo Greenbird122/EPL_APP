@@ -12,7 +12,6 @@ import 'package:repair_ai/features/triage/domain/triage_rules.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/localization/triage_l10n.dart';
 import 'package:repair_ai/core/widgets/loading_error_state.dart';
-import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/features/triage/presentation/widgets/explainability_card.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/repair_buttons.dart';
@@ -55,7 +54,9 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
     _savedDuration = draft.duration;
     _savedNotes = draft.notes;
 
-    ref.read(reportHistoryProvider.notifier).addReport(
+    ref
+        .read(reportHistoryProvider.notifier)
+        .addReport(
           SymptomReport(
             id: DateTime.now().toIso8601String(),
             date: DateTime.now(),
@@ -88,9 +89,7 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) context.go('/triage/symptom-report');
       });
-      return Scaffold(
-        body: LoadingState(message: l10n.onDeviceAnalysis),
-      );
+      return Scaffold(body: LoadingState(message: l10n.onDeviceAnalysis));
     }
 
     final symptoms = _savedSymptoms ?? draft?.symptoms ?? const <String>[];
@@ -110,9 +109,7 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
     final riskCardPadding = shortest < 380 ? 20.0 : 32.0;
 
     return Scaffold(
-      appBar: RepairAppBar(
-        title: l10n.aiRiskAssessment,
-      ),
+      appBar: RepairAppBar(title: l10n.aiRiskAssessment),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -121,8 +118,6 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 12),
-                const DemoDisclaimerBanner(compact: true),
                 const SizedBox(height: 16),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
@@ -357,7 +352,7 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
                   builder: (context, constraints) {
                     final stackActions =
                         RepairBreakpoints.isCompactPhone(context) ||
-                            constraints.maxWidth < 380;
+                        constraints.maxWidth < 380;
                     final backButton = RepairOutlinedButton(
                       label: l10n.triageBack,
                       onPressed: () => context.go('/triage/symptom-report'),
@@ -425,10 +420,7 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
 }
 
 class _AncContextCard extends StatelessWidget {
-  const _AncContextCard({
-    required this.title,
-    required this.flags,
-  });
+  const _AncContextCard({required this.title, required this.flags});
 
   final String title;
   final List<dynamic> flags;
@@ -444,8 +436,10 @@ class _AncContextCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.assignment_turned_in_outlined,
-                    color: AppTheme.warning),
+                const Icon(
+                  Icons.assignment_turned_in_outlined,
+                  color: AppTheme.warning,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -472,10 +466,7 @@ class _AncContextCard extends StatelessWidget {
 }
 
 class _ScreeningSourceChip extends StatelessWidget {
-  const _ScreeningSourceChip({
-    required this.result,
-    required this.l10n,
-  });
+  const _ScreeningSourceChip({required this.result, required this.l10n});
 
   final TriageResult result;
   final AppLocalizations l10n;

@@ -1,8 +1,5 @@
 class KenyaCounty {
-  const KenyaCounty({
-    required this.code,
-    required this.name,
-  });
+  const KenyaCounty({required this.code, required this.name});
 
   final String code;
   final String name;

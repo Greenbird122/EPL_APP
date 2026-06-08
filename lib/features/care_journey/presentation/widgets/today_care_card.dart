@@ -29,12 +29,15 @@ class TodayCareCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final hasReport = latestReport != null;
-    final risk =
-        hasReport ? l10n.riskFromStored(latestReport!.riskLevel) : null;
-    final riskLabel =
-        risk != null ? l10n.riskLabel(risk) : latestReport?.riskLevel;
-    final title =
-        hasReport ? l10n.todayCareSavedTitle : l10n.todayCareEmptyTitle;
+    final risk = hasReport
+        ? l10n.riskFromStored(latestReport!.riskLevel)
+        : null;
+    final riskLabel = risk != null
+        ? l10n.riskLabel(risk)
+        : latestReport?.riskLevel;
+    final title = hasReport
+        ? l10n.todayCareSavedTitle
+        : l10n.todayCareEmptyTitle;
     final message = _nextStepText(l10n, hasReport: hasReport);
     final primaryLabel = _primaryLabel(l10n, hasReport: hasReport);
     final iconColor = risk?.color ?? AppTheme.primary;
@@ -66,8 +69,8 @@ class TodayCareCard extends StatelessWidget {
                     Text(
                       l10n.todayCareTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -107,10 +110,7 @@ class TodayCareCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Text(
-            message,
-            style: const TextStyle(fontSize: 15, height: 1.35),
-          ),
+          Text(message, style: const TextStyle(fontSize: 15, height: 1.35)),
           const SizedBox(height: 14),
           Row(
             children: [

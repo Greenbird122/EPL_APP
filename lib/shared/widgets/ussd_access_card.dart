@@ -6,10 +6,7 @@ import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
 class UssdAccessCard extends StatelessWidget {
-  const UssdAccessCard({
-    super.key,
-    this.compact = false,
-  });
+  const UssdAccessCard({super.key, this.compact = false});
 
   final bool compact;
 
@@ -19,9 +16,7 @@ class UssdAccessCard extends StatelessWidget {
     await Clipboard.setData(const ClipboardData(text: kRepairAiUssdCode));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).ussdCopied),
-      ),
+      SnackBar(content: Text(AppLocalizations.of(context).ussdCopied)),
     );
   }
 

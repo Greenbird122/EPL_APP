@@ -4,10 +4,7 @@ class ProfileFormData {
   final String name;
   final String email;
 
-  const ProfileFormData({
-    required this.name,
-    required this.email,
-  });
+  const ProfileFormData({required this.name, required this.email});
 }
 
 /// Holds the latest login/profile form values (mocked in this app).
@@ -23,3 +20,16 @@ final profileEmailProvider = Provider<String?>((ref) {
   final data = ref.watch(profileFormDataProvider);
   return data?.email;
 });
+
+class CurrentPatientContext {
+  const CurrentPatientContext({required this.id, required this.name});
+
+  final int id;
+  final String name;
+
+  String get storageKey => '$id';
+}
+
+final currentPatientContextProvider = StateProvider<CurrentPatientContext?>(
+  (ref) => null,
+);

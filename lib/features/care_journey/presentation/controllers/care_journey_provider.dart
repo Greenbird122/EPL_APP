@@ -1,19 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum CareStepType {
-  report,
-  referral,
-  support,
-  followUp,
-}
+enum CareStepType { report, referral, support, followUp }
 
-enum FollowUpStatus {
-  unknown,
-  reachedCare,
-  notYet,
-  needsHelp,
-}
+enum FollowUpStatus { unknown, reachedCare, notYet, needsHelp }
 
 class CareJourneyNotifier extends StateNotifier<FollowUpStatus> {
   CareJourneyNotifier() : super(FollowUpStatus.unknown) {
@@ -40,5 +30,5 @@ class CareJourneyNotifier extends StateNotifier<FollowUpStatus> {
 
 final careJourneyProvider =
     StateNotifierProvider<CareJourneyNotifier, FollowUpStatus>((ref) {
-  return CareJourneyNotifier();
-});
+      return CareJourneyNotifier();
+    });

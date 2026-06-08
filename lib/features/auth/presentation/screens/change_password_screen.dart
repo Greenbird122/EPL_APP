@@ -6,6 +6,7 @@ import 'package:repair_ai/core/utils/app_error_handler.dart';
 import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
+import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/responsive_page.dart';
 
@@ -36,11 +37,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
-      _statusMessage = 'Updating your password...';
+      _statusMessage = l10n.changePasswordSubtitle;
     });
 
     try {
@@ -59,7 +61,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       });
     } on ApiException catch (error) {
       if (!mounted) return;
-      final message = friendlyAuthError(error);
+      final message = friendlyAuthStatusMessage(context, error);
       setState(() {
         _isSubmitting = false;
         _statusMessage = null;
@@ -68,7 +70,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       showAppErrorSnackBar(context, message);
     } catch (error) {
       if (!mounted) return;
-      final message = friendlyAuthError(error);
+      final message = friendlyAuthStatusMessage(context, error);
       setState(() {
         _isSubmitting = false;
         _statusMessage = null;

@@ -28,30 +28,30 @@ class SymptomReport {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'date': date.toIso8601String(),
-        'symptoms': symptoms,
-        'gestationalAge': gestationalAge,
-        'severity': severity,
-        'duration': duration,
-        'notes': notes,
-        'riskLevel': riskLevel,
-        'recommendation': recommendation,
-        'confidence': confidence,
-      };
+    'id': id,
+    'date': date.toIso8601String(),
+    'symptoms': symptoms,
+    'gestationalAge': gestationalAge,
+    'severity': severity,
+    'duration': duration,
+    'notes': notes,
+    'riskLevel': riskLevel,
+    'recommendation': recommendation,
+    'confidence': confidence,
+  };
 
   factory SymptomReport.fromJson(Map<String, dynamic> json) => SymptomReport(
-        id: json['id'],
-        date: DateTime.parse(json['date']),
-        symptoms: List<String>.from(json['symptoms']),
-        gestationalAge: (json['gestationalAge'] as num).toDouble(),
-        severity: json['severity'] as String? ?? 'moderate',
-        duration: json['duration'] as String? ?? 'today',
-        notes: json['notes'] as String? ?? '',
-        riskLevel: json['riskLevel'] as String,
-        recommendation: json['recommendation'] as String,
-        confidence: (json['confidence'] as num?)?.toDouble() ?? 0.85,
-      );
+    id: json['id'],
+    date: DateTime.parse(json['date']),
+    symptoms: List<String>.from(json['symptoms']),
+    gestationalAge: (json['gestationalAge'] as num).toDouble(),
+    severity: json['severity'] as String? ?? 'moderate',
+    duration: json['duration'] as String? ?? 'today',
+    notes: json['notes'] as String? ?? '',
+    riskLevel: json['riskLevel'] as String,
+    recommendation: json['recommendation'] as String,
+    confidence: (json['confidence'] as num?)?.toDouble() ?? 0.85,
+  );
 }
 
 class SymptomReportDraft {
@@ -103,8 +103,9 @@ class ReportHistoryNotifier extends StateNotifier<List<SymptomReport>> {
 
 final reportHistoryProvider =
     StateNotifierProvider<ReportHistoryNotifier, List<SymptomReport>>((ref) {
-  return ReportHistoryNotifier();
-});
+      return ReportHistoryNotifier();
+    });
 
-final symptomReportDraftProvider =
-    StateProvider<SymptomReportDraft?>((ref) => null);
+final symptomReportDraftProvider = StateProvider<SymptomReportDraft?>(
+  (ref) => null,
+);

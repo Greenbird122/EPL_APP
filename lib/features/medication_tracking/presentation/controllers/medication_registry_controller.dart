@@ -7,15 +7,20 @@ final medicationRepositoryProvider = Provider<MedicationRepository>((ref) {
   return MedicationRepository();
 });
 
-final medicationRegistryControllerProvider = StateNotifierProvider<
-    MedicationRegistryController, AsyncValue<List<MedicationModel>>>((ref) {
-  return MedicationRegistryController(ref.watch(medicationRepositoryProvider));
-});
+final medicationRegistryControllerProvider =
+    StateNotifierProvider<
+      MedicationRegistryController,
+      AsyncValue<List<MedicationModel>>
+    >((ref) {
+      return MedicationRegistryController(
+        ref.watch(medicationRepositoryProvider),
+      );
+    });
 
 class MedicationRegistryController
     extends StateNotifier<AsyncValue<List<MedicationModel>>> {
   MedicationRegistryController(this._repository)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     loadMedications();
   }
 

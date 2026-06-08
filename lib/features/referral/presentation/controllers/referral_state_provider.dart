@@ -18,10 +18,7 @@ class ReferralState {
   final ReferralUiStatus status;
   final int selectedFacility;
 
-  ReferralState copyWith({
-    ReferralUiStatus? status,
-    int? selectedFacility,
-  }) {
+  ReferralState copyWith({ReferralUiStatus? status, int? selectedFacility}) {
     return ReferralState(
       status: status ?? this.status,
       selectedFacility: selectedFacility ?? this.selectedFacility,
@@ -58,5 +55,5 @@ class ReferralStateNotifier extends StateNotifier<ReferralState> {
 
 final referralStateProvider =
     StateNotifierProvider<ReferralStateNotifier, ReferralState>((ref) {
-  return ReferralStateNotifier();
-});
+      return ReferralStateNotifier();
+    });

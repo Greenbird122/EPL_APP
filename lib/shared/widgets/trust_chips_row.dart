@@ -28,8 +28,9 @@ class TrustChipsRow extends StatelessWidget {
               Uri.parse('https://repairai.co.ke/'),
               mode: LaunchMode.externalApplication,
             ),
-            backgroundColor:
-                AppTheme.primary.withValues(alpha: isDark ? 0.25 : 0.12),
+            backgroundColor: AppTheme.primary.withValues(
+              alpha: isDark ? 0.25 : 0.12,
+            ),
             labelStyle: TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.w600,
@@ -46,9 +47,7 @@ class TrustChipsRow extends StatelessWidget {
       backgroundColor: isDark
           ? AppTheme.primary.withValues(alpha: 0.2)
           : AppTheme.primary.withValues(alpha: 0.08),
-      side: BorderSide(
-        color: AppTheme.primary.withValues(alpha: 0.3),
-      ),
+      side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.3)),
       labelStyle: TextStyle(
         color: isDark ? Colors.white70 : AppTheme.primary,
         fontWeight: FontWeight.w500,
@@ -71,9 +70,9 @@ class ImpactStatsRow extends StatelessWidget {
       children: [
         Text(
           l10n.platformImpactTitle,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Row(
@@ -89,9 +88,9 @@ class ImpactStatsRow extends StatelessWidget {
         Text(
           l10n.platformImpactSource,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 11,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 11,
+          ),
         ),
       ],
     );

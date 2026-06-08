@@ -186,9 +186,9 @@ class _CompleteCareProfileScreenState
                               Text(
                                 'Add the essentials for referrals and follow-ups.',
                                 style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -205,8 +205,9 @@ class _CompleteCareProfileScreenState
                                 isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'County',
-                                  prefixIcon:
-                                      Icon(Icons.location_city_outlined),
+                                  prefixIcon: Icon(
+                                    Icons.location_city_outlined,
+                                  ),
                                 ),
                                 items: kenyaCounties
                                     .map(
@@ -231,8 +232,8 @@ class _CompleteCareProfileScreenState
                                 ),
                                 validator: (value) =>
                                     value == null || value.trim().isEmpty
-                                        ? 'Enter sub-county.'
-                                        : null,
+                                    ? 'Enter sub-county.'
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               TextFormField(

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
+import 'package:repair_ai/features/auth/presentation/widgets/auth_form_widgets.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_shell.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -19,18 +19,17 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController(text: '+254');
-  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _usePhone = false;
   bool _obscurePassword = true;
   bool _isSubmitting = false;
   bool _rememberMe = true;
   String? _errorMessage;
+  String? _statusMessage;
+  AuthStatusTone _statusTone = AuthStatusTone.info;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -41,44 +40,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
+      _statusMessage = l10n.authSigningInStatus;
+      _statusTone = AuthStatusTone.info;
     });
 
     try {
       final session =
           await ref.read(authSessionProvider.notifier).signInWithBackend(
-                username: _usernameController.text.trim(),
+                username: _phoneController.text.trim(),
                 password: _passwordController.text,
                 rememberMe: _rememberMe,
               );
       if (!mounted) return;
-      setState(() => _isSubmitting = false);
-      context
-          .go(session.isProvider ? '/dashboard/provider' : '/login/transition');
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      final message = friendlyAuthError(error);
       setState(() {
         _isSubmitting = false;
+        _statusMessage = l10n.authSignedInStatus;
+        _statusTone = AuthStatusTone.success;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      context.go(
+        session.isProvider ? '/dashboard/provider' : '/login/transition',
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      final message = friendlyAuthStatusMessage(context, error);
+      setState(() {
+        _isSubmitting = false;
+        _statusMessage = null;
         _errorMessage = message;
       });
       showAppErrorSnackBar(context, message);
     } catch (error) {
       if (!mounted) return;
-      final message = friendlyAuthError(error, fallback: l10n.timeoutError);
+      final message = friendlyAuthStatusMessage(
+        context,
+        error,
+        fallback: l10n.authCareServicesUnavailable,
+      );
       setState(() {
         _isSubmitting = false;
+        _statusMessage = null;
         _errorMessage = message;
       });
       showAppErrorSnackBar(context, message);
     }
-  }
-
-  void _continuePhoneOtp() {
-    if (_phoneController.text.trim().length < 10) {
-      showAppErrorSnackBar(context, 'Enter a valid phone number.');
-      return;
-    }
-    context.push('/auth/otp');
   }
 
   @override
@@ -90,147 +96,105 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       subtitle: l10n.signInSubtitle,
       showBack: true,
       errorMessage: _errorMessage,
-      statusMessage: _isSubmitting ? 'Signing you in securely...' : null,
+      statusMessage: _statusMessage,
       isLoading: _isSubmitting,
+      statusTone: _statusTone,
       onDismissError: () => setState(() => _errorMessage = null),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_usePhone) ...[
-              AuthStatusBanner(
-                message:
-                    'Phone OTP is not connected to the backend yet. Use username and password for now.',
-                tone: AuthStatusTone.warning,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: l10n.phoneNumberLabel,
-                  prefixIcon: const Icon(Icons.phone_android),
+            AuthSectionHeader(
+              icon: Icons.lock_outline,
+              title: l10n.signInTitle,
+            ),
+            AuthTextField(
+              controller: _phoneController,
+              label: l10n.signInPhoneLabel,
+              helperText: l10n.signInPhoneHelper,
+              icon: Icons.phone_android,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              onChanged: (_) {
+                if (_errorMessage != null) {
+                  setState(() => _errorMessage = null);
+                }
+              },
+              validator: (v) {
+                final value = (v ?? '').trim();
+                if (value.isEmpty) {
+                  return l10n.signInPhoneRequired;
+                }
+                final normalized = value.replaceAll(RegExp(r'[\s-]'), '');
+                final valid =
+                    RegExp(r'^(?:0|254|\+254)7\d{8}$').hasMatch(normalized);
+                if (!valid) {
+                  return l10n.signInPhoneInvalid;
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            AuthTextField(
+              controller: _passwordController,
+              label: l10n.password,
+              icon: Icons.lock_outline,
+              suffixIcon: IconButton(
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                 ),
               ),
-              const SizedBox(height: 12),
-              CheckboxListTile(
-                value: _rememberMe,
-                onChanged: _isSubmitting
-                    ? null
-                    : (value) => setState(() => _rememberMe = value ?? true),
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                title: const Text('Remember me'),
-                subtitle: const Text('Keep me signed in on this device.'),
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _continuePhoneOtp,
-                icon: const Icon(Icons.sms),
-                label: Text(l10n.sendOtp),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ] else ...[
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  helperText: 'Use your username, not your email address.',
-                  prefixIcon: const Icon(Icons.alternate_email),
-                ),
-                keyboardType: TextInputType.text,
-                validator: (v) {
-                  final value = (v ?? '').trim();
-                  if (value.isEmpty) {
-                    return 'Username is required';
-                  }
-                  if (value.contains(' ')) {
-                    return 'Username cannot contain spaces';
-                  }
-                  if (value.contains('@')) {
-                    return 'Use your username, not email. Email login is not supported by this backend yet.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: l10n.password,
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    onPressed: () => setState(
-                      () => _obscurePassword = !_obscurePassword,
-                    ),
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                    ),
-                  ),
-                ),
-                obscureText: _obscurePassword,
-                validator: (v) {
-                  final value = v ?? '';
-                  if (value.isEmpty) return l10n.passwordRequired;
-                  return null;
-                },
-                onFieldSubmitted: (_) => _signInWithPassword(),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _signInWithPassword,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.login),
-                label: Text(l10n.loginButton),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
+              obscureText: _obscurePassword,
+              onChanged: (_) {
+                if (_errorMessage != null) {
+                  setState(() => _errorMessage = null);
+                }
+              },
+              validator: (v) {
+                final value = v ?? '';
+                if (value.isEmpty) return l10n.passwordRequired;
+                return null;
+              },
+              onFieldSubmitted: (_) => _signInWithPassword(),
+            ),
+            const SizedBox(height: 12),
+            AuthRememberRow(
+              value: _rememberMe,
+              onChanged: (value) {
+                if (!_isSubmitting) setState(() => _rememberMe = value);
+              },
+              title: l10n.rememberMe,
+              subtitle: l10n.rememberMePatientSubtitle,
+            ),
+            const SizedBox(height: 14),
+            AuthPrimaryButton(
+              onPressed: _signInWithPassword,
+              isLoading: _isSubmitting,
+              icon: Icons.login,
+              label: l10n.continueToCare,
+            ),
             const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: _isSubmitting
-                  ? null
-                  : () => setState(() {
-                        _usePhone = !_usePhone;
-                        _errorMessage = null;
-                      }),
-              icon: Icon(_usePhone ? Icons.lock_outline : Icons.phone_android),
-              label: Text(
-                _usePhone ? 'Use username and password' : 'Use phone OTP later',
-              ),
-            ),
-            TextButton(
-              onPressed: () => context.push('/auth/recover'),
-              child: Text(l10n.forgotPassword),
-            ),
-            TextButton(
-              onPressed: () => context.push('/auth/create-account'),
-              child: Text(l10n.newToRepairCreateAccount),
-            ),
-            TextButton.icon(
-              onPressed: () => context.push('/auth/chp'),
-              icon: const Icon(Icons.badge_outlined),
-              label: Text(l10n.providerAccess),
-            ),
-            TextButton(
-              onPressed: () => context.go('/auth'),
-              child: Text(l10n.useGuestAccessInstead),
+            AuthLinkWrap(
+              children: [
+                TextButton(
+                  onPressed: () => context.push('/auth/recover'),
+                  child: Text(l10n.forgotPassword),
+                ),
+                TextButton(
+                  onPressed: () => context.push('/auth/create-account'),
+                  child: Text(l10n.newToRepairCreateAccount),
+                ),
+                TextButton.icon(
+                  onPressed: () => context.push('/auth/chp'),
+                  icon: const Icon(Icons.badge_outlined),
+                  label: Text(l10n.providerAccess),
+                ),
+              ],
             ),
           ],
         ),

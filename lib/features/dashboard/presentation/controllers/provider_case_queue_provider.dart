@@ -1,16 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum ProviderCaseRisk {
-  high,
-  moderate,
-  low,
-}
+enum ProviderCaseRisk { high, moderate, low }
 
-enum ProviderReferralStatus {
-  sent,
-  pending,
-  reached,
-}
+enum ProviderReferralStatus { sent, pending, reached }
 
 enum ProviderTaskType {
   referralFollowUp,
@@ -18,11 +10,7 @@ enum ProviderTaskType {
   medicationCheckIn,
 }
 
-enum ProviderFollowUpStatus {
-  dueToday,
-  overdue,
-  completed,
-}
+enum ProviderFollowUpStatus { dueToday, overdue, completed }
 
 class ProviderQueueCase {
   const ProviderQueueCase({

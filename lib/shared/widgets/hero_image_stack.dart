@@ -140,15 +140,30 @@ class HomeHeroBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final heroHeight = RepairSizing.heroHeight(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: heroHeight,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          HeroImageStack(
-            imageAsset: imageAsset,
-            showForegroundCard: false,
+          Image.asset(
+            imageAsset,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                const ColoredBox(color: AppTheme.primary),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppTheme.primary.withValues(alpha: isDark ? 0.14 : 0.08),
+                  Colors.black.withValues(alpha: isDark ? 0.40 : 0.24),
+                ],
+              ),
+            ),
           ),
           if (topChild != null)
             Positioned(top: 12, left: 16, right: 16, child: topChild!),

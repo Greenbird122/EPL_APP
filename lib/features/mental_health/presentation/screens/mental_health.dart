@@ -4,7 +4,6 @@ import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
-import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 
 class MentalHealthScreen extends ConsumerStatefulWidget {
@@ -27,19 +26,19 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
         'emoji': '😊',
         'key': 'good',
         'label': l10n.feelingGood,
-        'color': Colors.green
+        'color': Colors.green,
       },
       {
         'emoji': '😐',
         'key': 'okay',
         'label': l10n.feelingOkay,
-        'color': Colors.orange
+        'color': Colors.orange,
       },
       {
         'emoji': '😔',
         'key': 'sad',
         'label': l10n.feelingSad,
-        'color': Colors.blue
+        'color': Colors.blue,
       },
       {
         'emoji': '😢',
@@ -56,17 +55,12 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
     ];
 
     return Scaffold(
-      appBar: RepairAppBar(
-        title: l10n.mentalHealthSupport,
-        showDemoChip: true,
-      ),
+      appBar: RepairAppBar(title: l10n.mentalHealthSupport),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const DemoDisclaimerBanner(compact: true),
-            const SizedBox(height: 16),
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: SizedBox(
@@ -89,9 +83,9 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
             const SizedBox(height: 16),
             Text(
               l10n.howAreYouFeeling,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -165,8 +159,9 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
-                            color:
-                                isSelected ? feeling['color'] as Color : null,
+                            color: isSelected
+                                ? feeling['color'] as Color
+                                : null,
                             fontSize: 12,
                           ),
                         ),

@@ -39,8 +39,8 @@ class ProfileScreen extends ConsumerWidget {
               Text(
                 ref.watch(profileNameProvider) ?? 'Jane Wanjiku',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 ref.watch(profileEmailProvider) ?? 'jane@example.com',
@@ -154,11 +154,7 @@ class ProfileScreen extends ConsumerWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          subtitle,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
+        subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),

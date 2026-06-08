@@ -3,11 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repair_ai/core/network/backend_services.dart';
 
-enum BackendHeartbeatState {
-  checking,
-  online,
-  offline,
-}
+enum BackendHeartbeatState { checking, online, offline }
 
 class BackendHeartbeatNotifier extends StateNotifier<BackendHeartbeatState> {
   BackendHeartbeatNotifier(this._ref) : super(BackendHeartbeatState.checking) {
@@ -38,5 +34,5 @@ class BackendHeartbeatNotifier extends StateNotifier<BackendHeartbeatState> {
 
 final backendHeartbeatProvider =
     StateNotifierProvider<BackendHeartbeatNotifier, BackendHeartbeatState>(
-  BackendHeartbeatNotifier.new,
-);
+      BackendHeartbeatNotifier.new,
+    );

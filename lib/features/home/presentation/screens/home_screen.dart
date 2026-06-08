@@ -4,23 +4,22 @@ import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
 import 'package:repair_ai/core/utils/responsive.dart';
+import 'package:repair_ai/features/auth/presentation/controllers/login_profile_providers.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/report_history_providers.dart';
-import 'package:repair_ai/features/care_journey/presentation/controllers/care_journey_provider.dart';
-import 'package:repair_ai/features/care_journey/presentation/widgets/care_support_block.dart';
-import 'package:repair_ai/features/care_journey/presentation/widgets/care_timeline.dart';
-import 'package:repair_ai/features/care_journey/presentation/widgets/today_care_card.dart';
-import 'package:repair_ai/features/referral/presentation/controllers/referral_state_provider.dart';
+import 'package:repair_ai/features/home/presentation/controllers/home_care_summary_provider.dart';
+import 'package:repair_ai/features/home/presentation/widgets/care_compass_card.dart';
+import 'package:repair_ai/features/home/presentation/widgets/care_signal_row.dart';
+import 'package:repair_ai/features/home/presentation/widgets/home_connection_status_chip.dart';
+import 'package:repair_ai/features/home/presentation/widgets/home_support_strip.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
+import 'package:repair_ai/localization/triage_l10n.dart';
 import 'package:repair_ai/shared/widgets/bottom_nav.dart';
-import 'package:repair_ai/shared/widgets/demo_disclaimer_banner.dart';
 import 'package:repair_ai/shared/widgets/hero_image_stack.dart';
 import 'package:repair_ai/shared/widgets/image_accent_card.dart';
 import 'package:repair_ai/shared/widgets/language_toggle.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/responsive_page.dart';
 import 'package:repair_ai/shared/widgets/theme_mode_toggle.dart';
-import 'package:repair_ai/shared/widgets/ussd_access_card.dart';
-import 'package:repair_ai/shared/widgets/whatsapp_support_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -30,8 +29,16 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final reports = ref.watch(reportHistoryProvider);
     final lastReport = reports.isNotEmpty ? reports.last : null;
-    final referral = ref.watch(referralStateProvider);
-    final followUpStatus = ref.watch(careJourneyProvider);
+    final summaryAsync = ref.watch(homeCareSummaryProvider);
+    final summary = summaryAsync.valueOrNull;
+    final profileName = ref.watch(profileNameProvider);
+    final patientName = _firstName(
+      summary?.name ?? profileName ?? l10n.careIdentityUnknown,
+    );
+    final storedRisk =
+        lastReport == null ? null : l10n.riskFromStored(lastReport.riskLevel);
+    final localRisk =
+        storedRisk == null ? lastReport?.riskLevel : l10n.riskLabel(storedRisk);
 
     return Scaffold(
       appBar: RepairAppBar(
@@ -39,10 +46,7 @@ class HomeScreen extends ConsumerWidget {
         actions: const [
           ThemeModeToggle(),
           SizedBox(width: 6),
-          Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: LanguageToggle(),
-          ),
+          Padding(padding: EdgeInsets.only(right: 8), child: LanguageToggle()),
         ],
       ),
       body: SingleChildScrollView(
@@ -53,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
             children: [
               HomeHeroBanner(
                 imageAsset: 'assets/illustrations/mother_2.jpg',
-                topChild: _OfflineChip(label: l10n.worksOffline),
+                topChild: const HomeConnectionStatusChip(),
                 bottomChild: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -76,32 +80,38 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: DemoDisclaimerBanner(compact: true),
-              ),
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TodayCareCard(
-                  latestReport: lastReport,
-                  referral: referral,
-                  followUpStatus: followUpStatus,
-                  onPrimaryAction: () => lastReport == null
-                      ? context.push('/triage/symptom-report')
-                      : context.push('/referral'),
-                  onSecondaryAction: () => lastReport == null
-                      ? launchUssdCode()
-                      : context.push('/history'),
+                child: _PersonalizedHeader(
+                  greeting: l10n.homeGreeting(patientName),
+                  summary: summary,
+                  loading: summaryAsync.isLoading,
+                  hasLocalReport: lastReport != null,
                 ),
               ),
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: CareTimeline(
-                  latestReport: lastReport,
-                  referral: referral,
-                  followUpStatus: followUpStatus,
+                child: CareCompassCard(
+                  summary: summary,
+                  hasLocalReport: lastReport != null,
+                  localRiskLabel: localRisk,
+                  onPrimaryAction: () => _handleCompassPrimary(
+                      context, summary, lastReport != null),
+                  onSecondaryAction: () =>
+                      _handleCompassSecondary(context, summary),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: CareSignalRow(
+                  summary: summary,
+                  hasLocalReport: lastReport != null,
+                  onTriage: () => context.push('/triage/symptom-report'),
+                  onReferral: () => context.push('/referral'),
+                  onCare: () => context.push('/care'),
                 ),
               ),
               const SizedBox(height: 16),
@@ -116,17 +126,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: WhatsAppSupportCard(),
-              ),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: UssdAccessCard(),
-              ),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: CareSupportBlock(compact: true),
+                child: HomeSupportStrip(),
               ),
               const SizedBox(height: 16),
               Padding(
@@ -165,40 +165,151 @@ class HomeScreen extends ConsumerWidget {
       bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
+
+  String _firstName(String name) {
+    final clean = name.trim();
+    if (clean.isEmpty) return 'Mama';
+    return clean.split(RegExp(r'\s+')).first;
+  }
+
+  void _handleCompassPrimary(
+    BuildContext context,
+    HomeCareSummary? summary,
+    bool hasLocalReport,
+  ) {
+    final state = summary?.backendAvailable == true
+        ? summary!.state
+        : (hasLocalReport
+            ? CareCompassState.checked
+            : CareCompassState.offline);
+    switch (state) {
+      case CareCompassState.profileNeeded:
+        context.push('/profile/complete-care');
+        return;
+      case CareCompassState.referralNeeded:
+        context.push('/referral');
+        return;
+      case CareCompassState.checked:
+      case CareCompassState.followUpPending:
+      case CareCompassState.stable:
+        context.push('/care');
+        return;
+      case CareCompassState.noCheck:
+      case CareCompassState.offline:
+        context.push('/triage/symptom-report');
+        return;
+    }
+  }
+
+  void _handleCompassSecondary(BuildContext context, HomeCareSummary? summary) {
+    if (summary != null && !summary.backendAvailable) {
+      launchUssdCode();
+      return;
+    }
+    context.push('/care');
+  }
 }
 
-class _OfflineChip extends StatelessWidget {
-  const _OfflineChip({required this.label});
+class _PersonalizedHeader extends StatelessWidget {
+  const _PersonalizedHeader({
+    required this.greeting,
+    required this.summary,
+    required this.loading,
+    required this.hasLocalReport,
+  });
 
-  final String label;
+  final String greeting;
+  final HomeCareSummary? summary;
+  final bool loading;
+  final bool hasLocalReport;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final foreground = isDark ? Colors.white : AppTheme.primary;
-    final background = isDark
-        ? AppTheme.primary.withValues(alpha: 0.62)
-        : Colors.white.withValues(alpha: 0.88);
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Chip(
-        avatar: Icon(
-          Icons.cloud_off,
-          size: 16,
-          color: foreground,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: scheme.onSurface,
+              ),
         ),
-        label: Text(
-          label,
-          style: TextStyle(
-            color: foreground,
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _IdentityChip(
+              icon: Icons.location_on_outlined,
+              label: summary?.county ??
+                  (loading ? l10n.careIdentityUnknown : l10n.locationNotSet),
+              color: AppTheme.primary,
+            ),
+            _IdentityChip(
+              icon: Icons.pregnant_woman,
+              label: summary?.pregnancyWeeks == null
+                  ? l10n.pregnancyWeek
+                  : '${summary!.pregnancyWeeks!.toStringAsFixed(0)} ${l10n.weeksPregnantLabel}',
+              color: AppTheme.accent,
+            ),
+            _IdentityChip(
+              icon: hasLocalReport || summary?.hasRisk == true
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked,
+              label: hasLocalReport || summary?.hasRisk == true
+                  ? l10n.todayCareSavedTitle
+                  : l10n.noCheckYet,
+              color: hasLocalReport || summary?.hasRisk == true
+                  ? AppTheme.success
+                  : AppTheme.primary,
+            ),
+          ],
         ),
-        backgroundColor: background,
-        side: BorderSide(
-          color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.62),
+      ],
+    );
+  }
+}
+
+class _IdentityChip extends StatelessWidget {
+  const _IdentityChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -223,6 +334,7 @@ class _ReportSymptomsCard extends StatelessWidget {
       accentColor: AppTheme.primary,
       onTap: onTap,
       imageWidth: 104,
+      imageFit: ImageAccentFit.visibleTop,
       child: Row(
         children: [
           Container(
@@ -290,6 +402,7 @@ class _CompactNavCard extends StatelessWidget {
       },
       accentColor: AppTheme.primary,
       imageWidth: 72,
+      imageFit: ImageAccentFit.visibleTop,
       onTap: onTap,
       child: ListTile(
         contentPadding: EdgeInsets.zero,
@@ -300,11 +413,7 @@ class _CompactNavCard extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          subtitle,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
+        subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right),
       ),
     );

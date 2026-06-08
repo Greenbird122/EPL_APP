@@ -1,9 +1,7 @@
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:repair_ai/core/config/backend_config.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
@@ -51,18 +49,23 @@ class AuthShell extends StatelessWidget {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final keyboardOpen = viewInsets.bottom > 0;
     final topGap = keyboardOpen
-        ? 28.0
-        : (size.height * 0.13).clamp(56.0, 118.0).toDouble();
+        ? 20.0
+        : (size.height * 0.105).clamp(44.0, 96.0).toDouble();
     final horizontalPadding = size.width < 380 ? 12.0 : 14.0;
     final panelPadding = size.width < 380
         ? const EdgeInsets.fromLTRB(14, 16, 14, 16)
         : const EdgeInsets.fromLTRB(18, 20, 18, 20);
     final glassTint = isDark
-        ? const Color(0xFF1F1737).withValues(alpha: 0.68)
-        : Colors.white.withValues(alpha: 0.58);
+        ? const Color(0xFF1F1737).withValues(alpha: 0.76)
+        : const Color(0xFFF5F0FF).withValues(alpha: 0.76);
     final fieldFill = isDark
-        ? Colors.white.withValues(alpha: 0.10)
-        : Colors.white.withValues(alpha: 0.74);
+        ? Colors.white.withValues(alpha: 0.11)
+        : const Color(0xFFFFFFFF).withValues(alpha: 0.72);
+    OutlineInputBorder inputBorder(Color color, [double width = 1]) =>
+        OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: color, width: width),
+        );
 
     return Scaffold(
       backgroundColor: AppTheme.primary,
@@ -72,9 +75,8 @@ class AuthShell extends StatelessWidget {
           Image.asset(
             image,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const ColoredBox(
-              color: AppTheme.primary,
-            ),
+            errorBuilder: (_, __, ___) =>
+                const ColoredBox(color: AppTheme.primary),
           ),
           ColoredBox(
             color: AppTheme.primary.withValues(alpha: imageOverlayOpacity),
@@ -87,8 +89,9 @@ class AuthShell extends StatelessWidget {
                 colors: [
                   AppTheme.primary.withValues(alpha: 0.28),
                   AppTheme.primary.withValues(alpha: isDark ? 0.74 : 0.48),
-                  (isDark ? Colors.black : const Color(0xFFE9E2FF))
-                      .withValues(alpha: isDark ? 0.78 : 0.58),
+                  (isDark ? Colors.black : const Color(0xFFE9E2FF)).withValues(
+                    alpha: isDark ? 0.78 : 0.58,
+                  ),
                 ],
               ),
             ),
@@ -154,7 +157,7 @@ class AuthShell extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                   if (errorMessage != null) ...[
                     AuthErrorBanner(
                       message: errorMessage!,
@@ -197,7 +200,61 @@ class AuthShell extends StatelessWidget {
                             data: Theme.of(context).copyWith(
                               inputDecorationTheme: Theme.of(context)
                                   .inputDecorationTheme
-                                  .copyWith(fillColor: fieldFill, filled: true),
+                                  .copyWith(
+                                    fillColor: fieldFill,
+                                    filled: true,
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 15,
+                                    ),
+                                    prefixIconColor:
+                                        WidgetStateColor.resolveWith(
+                                      (states) =>
+                                          states.contains(WidgetState.focused)
+                                              ? AppTheme.primary
+                                              : scheme.onSurfaceVariant,
+                                    ),
+                                    suffixIconColor:
+                                        WidgetStateColor.resolveWith(
+                                      (states) =>
+                                          states.contains(WidgetState.focused)
+                                              ? AppTheme.primary
+                                              : scheme.onSurfaceVariant,
+                                    ),
+                                    labelStyle: TextStyle(
+                                      color: scheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    floatingLabelStyle: const TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    helperStyle: TextStyle(
+                                      color: scheme.onSurfaceVariant,
+                                      fontSize: 11,
+                                      height: 1.2,
+                                    ),
+                                    errorMaxLines: 2,
+                                    helperMaxLines: 2,
+                                    border: inputBorder(
+                                      AppTheme.primary.withValues(alpha: 0.16),
+                                    ),
+                                    enabledBorder: inputBorder(
+                                      AppTheme.primary.withValues(alpha: 0.16),
+                                    ),
+                                    focusedBorder: inputBorder(
+                                      AppTheme.primary.withValues(alpha: 0.74),
+                                      1.4,
+                                    ),
+                                    errorBorder: inputBorder(
+                                      AppTheme.error.withValues(alpha: 0.8),
+                                    ),
+                                    focusedErrorBorder: inputBorder(
+                                      AppTheme.error,
+                                      1.4,
+                                    ),
+                                  ),
                               outlinedButtonTheme: OutlinedButtonThemeData(
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppTheme.primary,
@@ -221,9 +278,7 @@ class AuthShell extends StatelessWidget {
                                     spacing: 6,
                                     children: [
                                       Text(
-                                        kDebugMode
-                                            ? '${l10n.useUssdTitle} · ${BackendConfig.defaultBaseUrl}'
-                                            : l10n.useUssdTitle,
+                                        l10n.useUssdTitle,
                                         style: TextStyle(
                                           color: scheme.onSurfaceVariant,
                                           fontSize: 12,

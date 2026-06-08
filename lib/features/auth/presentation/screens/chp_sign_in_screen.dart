@@ -24,6 +24,8 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
   bool _isSubmitting = false;
   bool _rememberMe = true;
   String? _errorMessage;
+  String? _statusMessage;
+  AuthStatusTone _statusTone = AuthStatusTone.info;
 
   @override
   void dispose() {
@@ -38,6 +40,8 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
+      _statusMessage = l10n.authCheckingStaffStatus;
+      _statusTone = AuthStatusTone.info;
     });
 
     try {
@@ -52,28 +56,42 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
       if (!session.isProvider) {
         await ref.read(authSessionProvider.notifier).signOutBackend();
         if (!mounted) return;
-        const message = 'This sign-in is for CHP/provider accounts only.';
+        final message = l10n.authNoPermission;
         setState(() {
           _isSubmitting = false;
+          _statusMessage = null;
           _errorMessage = message;
         });
         showAppErrorSnackBar(context, message);
         return;
       }
+      setState(() {
+        _isSubmitting = false;
+        _statusMessage = l10n.authStaffSignedInStatus;
+        _statusTone = AuthStatusTone.success;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (!mounted) return;
       context.go('/dashboard/provider');
     } on ApiException catch (error) {
       if (!mounted) return;
-      final message = friendlyAuthError(error);
+      final message = friendlyAuthStatusMessage(context, error);
       setState(() {
         _isSubmitting = false;
+        _statusMessage = null;
         _errorMessage = message;
       });
       showAppErrorSnackBar(context, message);
     } catch (error) {
       if (!mounted) return;
-      final message = friendlyAuthError(error, fallback: l10n.timeoutError);
+      final message = friendlyAuthStatusMessage(
+        context,
+        error,
+        fallback: l10n.authCareServicesUnavailable,
+      );
       setState(() {
         _isSubmitting = false;
+        _statusMessage = null;
         _errorMessage = message;
       });
       showAppErrorSnackBar(context, message);
@@ -90,8 +108,9 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
       subtitle: l10n.providerSignInSubtitle,
       showBack: true,
       errorMessage: _errorMessage,
-      statusMessage: _isSubmitting ? 'Checking staff credentials...' : null,
+      statusMessage: _statusMessage,
       isLoading: _isSubmitting,
+      statusTone: _statusTone,
       onDismissError: () => setState(() => _errorMessage = null),
       child: Form(
         key: _formKey,
@@ -109,8 +128,10 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_user_outlined,
-                      color: AppTheme.primary),
+                  const Icon(
+                    Icons.verified_user_outlined,
+                    color: AppTheme.primary,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -126,7 +147,7 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
               controller: _staffController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: l10n.staffIdOrEmail,
+                labelText: l10n.staffIdOrUsername,
                 prefixIcon: const Icon(Icons.badge_outlined),
               ),
               validator: (value) =>
@@ -139,9 +160,8 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
                 labelText: l10n.password,
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
-                  onPressed: () => setState(
-                    () => _obscurePassword = !_obscurePassword,
-                  ),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                   icon: Icon(
                     _obscurePassword
                         ? Icons.visibility_off_outlined
@@ -165,8 +185,8 @@ class _ChpSignInScreenState extends ConsumerState<ChpSignInScreen> {
                   : (value) => setState(() => _rememberMe = value ?? true),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
-              title: const Text('Remember me'),
-              subtitle: const Text('Keep this staff session on this device.'),
+              title: Text(l10n.rememberMe),
+              subtitle: Text(l10n.rememberMeStaffSubtitle),
             ),
             const SizedBox(height: 8),
             ElevatedButton.icon(

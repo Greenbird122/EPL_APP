@@ -4,12 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/responsive.dart';
 
-enum ImageAccentContentStyle {
-  split,
-  glass,
-  fullOverlay,
-  plain,
-}
+enum ImageAccentContentStyle { split, glass, fullOverlay, plain }
+
+enum ImageAccentFit { cover, visibleTop, contain }
 
 class ImageAccentCard extends StatelessWidget {
   const ImageAccentCard({
@@ -21,6 +18,7 @@ class ImageAccentCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.imageWidth = 86,
     this.contentStyle = ImageAccentContentStyle.split,
+    this.imageFit = ImageAccentFit.cover,
   });
 
   final String imageAsset;
@@ -30,6 +28,7 @@ class ImageAccentCard extends StatelessWidget {
   final EdgeInsets padding;
   final double imageWidth;
   final ImageAccentContentStyle contentStyle;
+  final ImageAccentFit imageFit;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +40,10 @@ class ImageAccentCard extends StatelessWidget {
         final availableWidth = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width - 32;
-        final responsiveHeight =
-            RepairSizing.imageCardHeight(context, availableWidth);
+        final responsiveHeight = RepairSizing.imageCardHeight(
+          context,
+          availableWidth,
+        );
         final imageHeight = textScaler.scale(1) > 1.25
             ? responsiveHeight.clamp(104.0, 168.0)
             : responsiveHeight;
@@ -75,6 +76,7 @@ class ImageAccentCard extends StatelessWidget {
                       child: _ImageBand(
                         imageAsset: imageAsset,
                         accentColor: accentColor,
+                        imageFit: imageFit,
                       ),
                     ),
                     DecoratedBox(
@@ -83,10 +85,7 @@ class ImageAccentCard extends StatelessWidget {
                             ? const Color(0xFF1E1E28)
                             : Colors.white.withValues(alpha: 0.98),
                       ),
-                      child: Padding(
-                        padding: compactPadding,
-                        child: child,
-                      ),
+                      child: Padding(padding: compactPadding, child: child),
                     ),
                   ],
                 )
@@ -155,10 +154,12 @@ class _ImageBand extends StatelessWidget {
   const _ImageBand({
     required this.imageAsset,
     required this.accentColor,
+    required this.imageFit,
   });
 
   final String imageAsset;
   final Color accentColor;
+  final ImageAccentFit imageFit;
 
   @override
   Widget build(BuildContext context) {
@@ -167,11 +168,26 @@ class _ImageBand extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(
-          imageAsset,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => ColoredBox(
-            color: accentColor.withValues(alpha: 0.22),
+        Positioned.fill(
+          child: ColoredBox(
+            color: accentColor.withValues(alpha: isDark ? 0.16 : 0.08),
+          ),
+        ),
+        Align(
+          alignment: imageFit == ImageAccentFit.visibleTop
+              ? Alignment.topCenter
+              : Alignment.center,
+          child: Image.asset(
+            imageAsset,
+            width: double.infinity,
+            height: double.infinity,
+            fit: switch (imageFit) {
+              ImageAccentFit.cover => BoxFit.cover,
+              ImageAccentFit.visibleTop => BoxFit.contain,
+              ImageAccentFit.contain => BoxFit.contain,
+            },
+            errorBuilder: (_, __, ___) =>
+                ColoredBox(color: accentColor.withValues(alpha: 0.22)),
           ),
         ),
         DecoratedBox(

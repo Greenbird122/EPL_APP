@@ -86,8 +86,10 @@ class TriageRules {
     }
 
     final symptomCount = symptoms.length.clamp(1, 5);
-    final confidence =
-        (0.72 + (symptomCount * 0.05) + (score * 0.02)).clamp(0.72, 0.95);
+    final confidence = (0.72 + (symptomCount * 0.05) + (score * 0.02)).clamp(
+      0.72,
+      0.95,
+    );
 
     return TriageResult(
       riskLevel: level,

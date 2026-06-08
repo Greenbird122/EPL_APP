@@ -68,8 +68,8 @@ class _LoginTransitionScreenState extends State<LoginTransitionScreen>
               Text(
                 l10n.welcomeHome,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),

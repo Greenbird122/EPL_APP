@@ -33,8 +33,6 @@ void main() {
     expect(paths, contains('/auth/sign-in'));
     expect(paths, contains('/auth/chp'));
     expect(paths, contains('/auth/create-account'));
-    expect(paths, contains('/auth/otp'));
-    expect(paths, contains('/auth/demo'));
     expect(paths, contains('/auth/recover'));
     expect(paths, contains('/login/transition'));
     expect(paths, contains('/how-it-works'));

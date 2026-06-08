@@ -12,34 +12,44 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(tokenStore: ref.watch(secureTokenStoreProvider));
 });
 
-final authApiProvider = Provider<AuthApi>((ref) =>
-    AuthApi(ref.watch(apiClientProvider), ref.watch(secureTokenStoreProvider)));
-final patientApiProvider =
-    Provider<PatientApi>((ref) => PatientApi(ref.watch(apiClientProvider)));
-final visitApiProvider =
-    Provider<VisitApi>((ref) => VisitApi(ref.watch(apiClientProvider)));
-final triageApiProvider =
-    Provider<TriageApi>((ref) => TriageApi(ref.watch(apiClientProvider)));
-final referralApiProvider =
-    Provider<ReferralApi>((ref) => ReferralApi(ref.watch(apiClientProvider)));
-final facilityApiProvider =
-    Provider<FacilityApi>((ref) => FacilityApi(ref.watch(apiClientProvider)));
-final followUpApiProvider =
-    Provider<FollowUpApi>((ref) => FollowUpApi(ref.watch(apiClientProvider)));
-final clinicalApiProvider =
-    Provider<ClinicalApi>((ref) => ClinicalApi(ref.watch(apiClientProvider)));
+final authApiProvider = Provider<AuthApi>(
+  (ref) => AuthApi(
+    ref.watch(apiClientProvider),
+    ref.watch(secureTokenStoreProvider),
+  ),
+);
+final patientApiProvider = Provider<PatientApi>(
+  (ref) => PatientApi(ref.watch(apiClientProvider)),
+);
+final visitApiProvider = Provider<VisitApi>(
+  (ref) => VisitApi(ref.watch(apiClientProvider)),
+);
+final triageApiProvider = Provider<TriageApi>(
+  (ref) => TriageApi(ref.watch(apiClientProvider)),
+);
+final referralApiProvider = Provider<ReferralApi>(
+  (ref) => ReferralApi(ref.watch(apiClientProvider)),
+);
+final facilityApiProvider = Provider<FacilityApi>(
+  (ref) => FacilityApi(ref.watch(apiClientProvider)),
+);
+final followUpApiProvider = Provider<FollowUpApi>(
+  (ref) => FollowUpApi(ref.watch(apiClientProvider)),
+);
+final clinicalApiProvider = Provider<ClinicalApi>(
+  (ref) => ClinicalApi(ref.watch(apiClientProvider)),
+);
 final transcriptionApiProvider = Provider<TranscriptionApi>(
-    (ref) => TranscriptionApi(ref.watch(apiClientProvider)));
+  (ref) => TranscriptionApi(ref.watch(apiClientProvider)),
+);
 final backendStatusApiProvider = Provider<BackendStatusApi>(
-    (ref) => BackendStatusApi(ref.watch(apiClientProvider)));
+  (ref) => BackendStatusApi(ref.watch(apiClientProvider)),
+);
 final ancProfileApiProvider = Provider<AncProfileApi>(
-    (ref) => AncProfileApi(ref.watch(apiClientProvider)));
+  (ref) => AncProfileApi(ref.watch(apiClientProvider)),
+);
 
-enum BackendConnectionState {
-  unknown,
-  online,
-  offline,
-}
+enum BackendConnectionState { unknown, online, offline }
 
 class AuthApi {
   const AuthApi(this._client, this._tokenStore);
@@ -55,7 +65,7 @@ class AuthApi {
     final data = await _client.post(
       '/api/auth/login/',
       authenticated: false,
-      body: {'username': username, 'password': password},
+      body: {'phone': username, 'password': password},
     ) as Map<String, dynamic>;
     final access = data['access'] as String?;
     final refresh = data['refresh'] as String?;
@@ -69,9 +79,7 @@ class AuthApi {
     return data;
   }
 
-  Future<Map<String, dynamic>> refresh({
-    required String refreshToken,
-  }) async {
+  Future<Map<String, dynamic>> refresh({required String refreshToken}) async {
     final data = await _client.post(
       '/api/auth/refresh/',
       authenticated: false,
@@ -100,7 +108,8 @@ class AuthApi {
   }
 
   Future<Map<String, dynamic>> registerPatient(
-      Map<String, dynamic> body) async {
+    Map<String, dynamic> body,
+  ) async {
     return await _client.post(
       '/api/auth/register/',
       authenticated: false,
@@ -196,8 +205,11 @@ class TriageApi {
   }
 
   Future<Map<String, dynamic>> runTriage(int visitId) async {
-    return await _client.post('/api/triage/run/', body: {'visit_id': visitId})
-        as Map<String, dynamic>;
+    return await _client.post(
+      '/api/triage/run/',
+      body: {'visit_id': visitId},
+      timeout: const Duration(seconds: 35),
+    ) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> deepseekAnalyze(
@@ -206,6 +218,7 @@ class TriageApi {
     return await _client.post(
       '/api/triage/deepseek-analyze/',
       body: payload,
+      timeout: const Duration(seconds: 45),
     ) as Map<String, dynamic>;
   }
 
@@ -220,6 +233,7 @@ class TriageApi {
       fileField: 'audio',
       fileName: fileName,
       fileBytes: fileBytes,
+      timeout: const Duration(seconds: 130),
     ) as Map<String, dynamic>;
   }
 }
