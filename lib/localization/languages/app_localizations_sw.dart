@@ -955,7 +955,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get ussdCopied => 'Msimbo wa USSD umenakiliwa: *384#';
 
   @override
-  String get homeSupportChannelsSuffix => 'Tumia app, WhatsApp, au USSD.';
+  String get homeSupportChannelsSuffix => 'Tumia app, USSD, au phone.';
 
   @override
   String homeGreeting(String name) => '${_dayPartSw()}, $name';
@@ -1228,6 +1228,15 @@ class AppLocalizationsSw extends AppLocalizations {
   String get transport => 'Usafiri';
 
   @override
+  String get website => 'Website';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get mobileApp => 'Mobile App';
+
+  @override
   String get findCareTitle => 'Tafuta Huduma';
 
   @override
@@ -1385,10 +1394,6 @@ class AppLocalizationsSw extends AppLocalizations {
       'Uchunguzi wa AI umekagua dalili zako na hitaji la rufaa.';
 
   @override
-  String get localScreeningReferralGuidance =>
-      'Uchunguzi wa hatari umekagua dalili zako. Mwongozo wa rufaa unategemea kanuni za sasa za usalama.';
-
-  @override
   String get findVerifiedCareNow => 'Tafuta huduma iliyothibitishwa sasa';
 
   @override
@@ -1509,10 +1514,85 @@ class AppLocalizationsSw extends AppLocalizations {
   String get aiReadinessChecking => 'Inakagua AI';
 
   @override
-  String get localSafetyScreening => 'Uchunguzi wa usalama wa ndani';
+  String get aiStagePreparing => 'Tunatayarisha ripoti yako';
 
   @override
-  String get localSafetyFallback => 'Msaada wa usalama wa ndani';
+  String get aiStagePreparingSubtitle =>
+      'Tunakagua wasifu wako wa huduma na maelezo ya dalili.';
+
+  @override
+  String get aiStagePreparingShort => 'Tayarisha';
+
+  @override
+  String get aiStageSending => 'Tunatuma dalili kwa usalama';
+
+  @override
+  String get aiStageSendingSubtitle =>
+      'Dalili zako zinahifadhiwa kwa ukaguzi huu wa huduma.';
+
+  @override
+  String get aiStageSendingShort => 'Tuma';
+
+  @override
+  String get aiStageAnalyzing => 'Uchunguzi wa AI unaendelea';
+
+  @override
+  String get aiStageAnalyzingSubtitle =>
+      'REPAIR-AI inakagua kiwango cha hatari, uharaka, na hatua inayofuata.';
+
+  @override
+  String get aiStageAnalyzingShort => 'Chunguza';
+
+  @override
+  String get aiStageReferral => 'Tunakagua hitaji la rufaa';
+
+  @override
+  String get aiStageReferralSubtitle =>
+      'Tunatafuta dalili zinazoonyesha huduma iliyothibitishwa inaweza kuhitajika.';
+
+  @override
+  String get aiStageReferralShort => 'Rufaa';
+
+  @override
+  String get aiStageSaving => 'Tunatunza rekodi yako ya huduma';
+
+  @override
+  String get aiStageSavingSubtitle =>
+      'Matokeo yako yanaandaliwa kwa mtiririko wako wa huduma.';
+
+  @override
+  String get aiStageSavingShort => 'Hifadhi';
+
+  @override
+  String get aiUnavailableActionsTitle => 'Uchunguzi wa AI hauko tayari bado';
+
+  @override
+  String get aiUnavailableActionsSubtitle =>
+      'Hatutakisia matokeo ya hatari. Unaweza kujaribu tena, kurekebisha dalili, kuwasiliana na msaada, au kutafuta huduma iliyothibitishwa.';
+
+  @override
+  String get editSymptoms => 'Rekebisha dalili';
+
+  @override
+  String get contactSupport => 'Wasiliana na msaada';
+
+  @override
+  String get typeInstead => 'Andika badala yake';
+
+  @override
+  String get retryVoiceUpload => 'Jaribu tena kutuma sauti';
+
+  @override
+  String get voiceRequestingMic => 'Tunakagua ruhusa ya maikrofoni...';
+
+  @override
+  String get voiceRecordingNow => 'Inarekodi sasa. Zungumza kawaida.';
+
+  @override
+  String get voiceStopping => 'Tunasimamisha rekodi...';
+
+  @override
+  String get voiceUploading => 'Tunatuma rekodi ya sauti...';
 
   @override
   String get patientStatedAge => 'Umri uliotajwa na mgonjwa';
@@ -1526,11 +1606,8 @@ class AppLocalizationsSw extends AppLocalizations {
       'Ukitaja umri wako, tunauchukua kama taarifa uliyoitoa. Programu haikisi umri kutokana na dalili.';
 
   @override
-  String get useLocalSafetyScreening => 'Tumia uchunguzi wa usalama wa ndani';
-
-  @override
   String get aiServiceUnavailable =>
-      'Uchunguzi wa AI haupatikani sasa. Unaweza kujaribu tena au kutumia uchunguzi wa usalama wa ndani.';
+      'Uchunguzi wa AI haupatikani sasa. Jaribu tena, rekebisha dalili, wasiliana na msaada, au tafuta huduma ikiwa dalili ni kali.';
 
   @override
   String get patientProfileRequiredForAi =>
@@ -1590,6 +1667,114 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get ancContextForRisk =>
       'Taarifa za ANC zilizozingatiwa pamoja na uchunguzi huu';
+
+  // -- Risk result screen labels
+  @override
+  String get yourAssessment => 'Your Assessment';
+
+  @override
+  String get riskCallToActionHigh => 'Seek Care Now';
+
+  @override
+  String get riskCallToActionModerate => 'Monitor Closely';
+
+  @override
+  String get riskCallToActionLow => 'Continue Check-ups';
+
+  @override
+  String confidenceLabel(String pct) => 'Confidence: $pct%';
+
+  @override
+  String get riskUrgentInstructions =>
+      'Do not wait. Go to a health facility now or call for help.';
+
+  @override
+  String get whatYouReported => 'What you reported';
+
+  @override
+  String get whatYouShouldDo => 'What you should do';
+
+  @override
+  String get newCheck => 'New Check';
+
+  @override
+  String get findFacility => 'Find Facility';
+
+  @override
+  String get viewCare => 'View Care';
+
+  @override
+  String get discussResultWithAi => 'Discuss this result with AI';
+
+  @override
+  String get screeningSourceAiAssisted => 'AI Assisted';
+
+  @override
+  String get screeningSourceQuickCheck => 'Quick Check';
+
+  @override
+  String get riskSubtitleHigh => 'This needs urgent medical attention';
+
+  @override
+  String get riskSubtitleModerate => 'This needs a check-up soon';
+
+  @override
+  String get riskSubtitleLow => 'Keep up with your regular visits';
+
+  @override
+  String weeksPregnantWithTrimester(String weeks, String trimester) =>
+      '$weeks weeks pregnant • $trimester';
+
+  // -- Chat / case list labels
+  @override
+  String get aiAnalyzingYourCase => 'AI is analyzing your case...';
+
+  @override
+  String get submitSymptomsForFirstCase =>
+      'Submit symptoms below to create your first case.';
+
+  @override
+  String get chatWithCareAssistantHint =>
+      'Your chat with the Care Assistant will appear here.';
+
+  @override
+  String get chatSenderYou => 'You';
+
+  @override
+  String get chatSenderCareAssistant => 'Care Assistant';
+
+  @override
+  String get localSafetyFallback => 'Mwongozo wa usalama wa ndani unapatikana.';
+
+  @override
+  String get useLocalSafetyScreening => 'Tumia uchunguzi wa usalama wa ndani';
+
+  @override
+  String get caseRiskHigh => 'High Risk';
+
+
+  @override
+  String get caseRiskModerate => 'Moderate Risk';
+
+  @override
+  String get caseRiskLow => 'Low Risk';
+
+  @override
+  String get caseStatusActive => 'Active';
+
+  @override
+  String get caseStatusAnalyzing => 'Analyzing';
+
+  @override
+  String get caseStatusReferred => 'Referred';
+
+  // -- Referral / action labels
+  @override
+  String get whatsApp => 'WhatsApp';
+
+  // -- Video splash
+  @override
+  String get appMaternalHealthPlatform => 'Maternal Health Platform';
 }
 
 String _dayPartSw() {

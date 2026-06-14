@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
+import 'package:repair_ai/core/network/backend_heartbeat_provider.dart';
 import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/features/anc/domain/anc_profile.dart';
 import 'package:repair_ai/features/anc/presentation/controllers/anc_profile_controller.dart';
@@ -97,11 +98,11 @@ class _AncProfileScreenState extends ConsumerState<AncProfileScreen> {
       previousComplications: _previousComplications.text.trim(),
       notes: _notes.text.trim(),
       nextAncAction: _nextAction.text.trim(),
-      updatedBy: 'CHP/provider',
+      updatedBy: 'CHP',
       updatedAt: DateTime.now(),
     );
     await ref.read(ancProfileSaveControllerProvider.notifier).save(profile);
-    ref.invalidate(ancProfileProvider(widget.patientId));
+    ref.invalidate(ancProfileByIdProvider(widget.patientId));
     if (!mounted) return;
     final state = ref.read(ancProfileSaveControllerProvider);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -118,8 +119,10 @@ class _AncProfileScreenState extends ConsumerState<AncProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final profileAsync = ref.watch(ancProfileProvider(widget.patientId));
+    final profileAsync = ref.watch(ancProfileByIdProvider(widget.patientId));
     final saveState = ref.watch(ancProfileSaveControllerProvider);
+    final isOnline =
+        ref.watch(backendHeartbeatProvider) == BackendHeartbeatState.online;
     final title = widget.patientName == null
         ? l10n.ancSpecialCases
         : '${widget.patientName} ANC profile';
@@ -140,6 +143,10 @@ class _AncProfileScreenState extends ConsumerState<AncProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!isOnline && _canManage) ...[
+                    const _OfflineFormBanner(),
+                    const SizedBox(height: 12),
+                  ],
                   _AncIntroCard(
                     canManage: _canManage,
                     isEmpty: viewProfile.isEmpty,
@@ -212,10 +219,10 @@ class _AncIntroCard extends StatelessWidget {
             Expanded(
               child: Text(
                 canManage
-                    ? 'Record verified ANC special-case details for this mother. Patients can view this, but cannot edit it.'
+                    ? 'Record verified ANC special-case details for this patient. Patients can view this, but cannot edit it.'
                     : isEmpty
-                    ? l10n.ancProfileEmpty
-                    : l10n.ancProfileRecordedByCareTeam,
+                        ? l10n.ancProfileEmpty
+                        : l10n.ancProfileRecordedByCareTeam,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   height: 1.35,
@@ -224,6 +231,36 @@ class _AncIntroCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OfflineFormBanner extends StatelessWidget {
+  const _OfflineFormBanner();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.warning.withValues(alpha: 0.2)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 18, color: AppTheme.warning),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "You're offline. Changes will sync when connected.",
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.warning),
+            ),
+          ),
+        ],
       ),
     );
   }

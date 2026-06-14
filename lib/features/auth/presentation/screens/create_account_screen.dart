@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:repair_ai/core/config/kenya_counties.dart';
 import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
 import 'package:repair_ai/features/auth/presentation/controllers/auth_session_provider.dart';
@@ -20,11 +21,11 @@ class CreateAccountScreen extends ConsumerStatefulWidget {
 class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _usernameController = TextEditingController();
   final _phoneController = TextEditingController(text: '+254');
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _subCountyController = TextEditingController();
+  String? _selectedCounty;
   bool _acceptedConsent = false;
   bool _obscurePassword = true;
   bool _isSubmitting = false;
@@ -35,11 +36,10 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _usernameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _subCountyController.dispose();
     super.dispose();
   }
 
@@ -63,12 +63,13 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
       final session = await ref
           .read(authSessionProvider.notifier)
           .registerPatientWithBackend(
-            username: _usernameController.text.trim(),
-            email: _emailController.text.trim(),
             password: _passwordController.text,
             passwordConfirm: _confirmPasswordController.text,
             fullName: _nameController.text.trim(),
             phone: _phoneController.text.trim(),
+            country: 'Kenya',
+            county: _selectedCounty ?? '',
+            subCounty: _subCountyController.text.trim(),
             rememberMe: true,
           );
       if (!mounted) return;
@@ -143,21 +144,6 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   (value ?? '').trim().length < 2 ? l10n.nameTooShort : null,
             ),
             const SizedBox(height: 12),
-            AuthTextField(
-              controller: _usernameController,
-              onChanged: (_) => _clearError(),
-              label: l10n.usernameCareIdLabel,
-              helperText: l10n.usernameCreateHelper,
-              icon: Icons.alternate_email,
-              textInputAction: TextInputAction.next,
-              validator: (value) {
-                final text = (value ?? '').trim();
-                if (text.length < 3) return l10n.usernameCareIdRequired;
-                if (text.contains(' ')) return l10n.usernameCareIdNoSpaces;
-                return null;
-              },
-            ),
-            const SizedBox(height: 18),
             AuthSectionHeader(
               icon: Icons.phone_android,
               title: l10n.contactDetailsSection,
@@ -169,25 +155,50 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
               textInputAction: TextInputAction.next,
               label: l10n.phoneNumberLabel,
               icon: Icons.phone_android,
+              helperText:
+                  'Your phone number will be your Care ID for signing in.',
               validator: (value) =>
                   (value ?? '').trim().length < 10 ? 'Phone is required' : null,
             ),
+            const SizedBox(height: 18),
+            const AuthSectionHeader(
+              icon: Icons.location_on_outlined,
+              title: 'Your Location',
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedCounty,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: 'County',
+                prefixIcon: const Icon(Icons.map_outlined),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              items: kenyaCounties
+                  .map((c) => DropdownMenuItem(
+                        value: c.name,
+                        child: Text(c.name),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                _clearError();
+                setState(() => _selectedCounty = value);
+              },
+              validator: (value) =>
+                  (value ?? '').isEmpty ? 'Please select your county' : null,
+            ),
             const SizedBox(height: 12),
             AuthTextField(
-              controller: _emailController,
+              controller: _subCountyController,
               onChanged: (_) => _clearError(),
-              keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
-              label: l10n.emailLabel,
-              icon: Icons.email_outlined,
-              validator: (value) {
-                final text = (value ?? '').trim();
-                if (text.isEmpty) return l10n.emailRequired;
-                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)) {
-                  return l10n.emailInvalid;
-                }
-                return null;
-              },
+              label: 'Sub-County / Ward',
+              icon: Icons.location_city,
+              validator: (value) => (value ?? '').trim().isEmpty
+                  ? 'Sub-county is required'
+                  : null,
             ),
             const SizedBox(height: 18),
             AuthSectionHeader(

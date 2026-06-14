@@ -9,8 +9,31 @@ import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 import 'package:repair_ai/shared/widgets/responsive_page.dart';
 import 'package:repair_ai/shared/widgets/trust_chips_row.dart';
 
-class HowItWorksScreen extends ConsumerWidget {
+class HowItWorksScreen extends ConsumerStatefulWidget {
   const HowItWorksScreen({super.key});
+
+  @override
+  ConsumerState<HowItWorksScreen> createState() => _HowItWorksScreenState();
+}
+
+class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _timelineController;
+
+  @override
+  void initState() {
+    super.initState();
+    _timelineController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _timelineController.dispose();
+    super.dispose();
+  }
 
   List<_StepData> _steps(AppLocalizations l10n) => [
         _StepData(
@@ -40,10 +63,16 @@ class HowItWorksScreen extends ConsumerWidget {
       ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final steps = _steps(l10n);
     final compact = RepairBreakpoints.isCompactPhone(context);
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final timelineProgress = disableAnimations
+        ? 1.0
+        : Curves.easeOutCubic.transform(
+            _timelineController.value.clamp(0.0, 1.0));
 
     return Scaffold(
       appBar: RepairAppBar(title: l10n.howItWorksTitle),
@@ -86,7 +115,11 @@ class HowItWorksScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   const TrustChipsRow(),
                   SizedBox(height: compact ? 14 : 18),
-                  _HowItWorksTimeline(steps: steps),
+                  _HowItWorksTimeline(
+                    steps: steps,
+                    progress: timelineProgress,
+                    disableAnimations: disableAnimations,
+                  ),
                   SizedBox(height: compact ? 12 : 18),
                   ElevatedButton(
                     onPressed: () => context.go('/auth'),
@@ -153,9 +186,15 @@ class _RepairAiMark extends StatelessWidget {
 }
 
 class _HowItWorksTimeline extends StatelessWidget {
-  const _HowItWorksTimeline({required this.steps});
+  const _HowItWorksTimeline({
+    required this.steps,
+    required this.progress,
+    required this.disableAnimations,
+  });
 
   final List<_StepData> steps;
+  final double progress;
+  final bool disableAnimations;
 
   @override
   Widget build(BuildContext context) {
@@ -166,9 +205,21 @@ class _HowItWorksTimeline extends StatelessWidget {
             step: steps[i],
             isFirst: i == 0,
             isLast: i == steps.length - 1,
+            entranceProgress: _stepEntrance(i, steps.length),
+            disableAnimations: disableAnimations,
           ),
       ],
     );
+  }
+
+  double _stepEntrance(int index, int total) {
+    if (disableAnimations) return 1.0;
+    const stagger = 0.22;
+    final start = index * stagger;
+    final end = start + 0.35;
+    if (progress < start) return 0.0;
+    if (progress > end) return 1.0;
+    return (progress - start) / (end - start);
   }
 }
 
@@ -177,20 +228,33 @@ class _HowStepCard extends StatelessWidget {
     required this.step,
     required this.isFirst,
     required this.isLast,
+    required this.entranceProgress,
+    required this.disableAnimations,
   });
 
   final _StepData step;
   final bool isFirst;
   final bool isLast;
+  final double entranceProgress;
+  final bool disableAnimations;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final animatedOpacity =
+        disableAnimations ? 1.0 : Curves.easeOutCubic.transform(entranceProgress);
+    final animatedOffset =
+        disableAnimations ? 0.0 : (1.0 - entranceProgress) * 18.0;
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return AnimatedOpacity(
+      duration: Duration.zero,
+      opacity: animatedOpacity,
+      child: Transform.translate(
+        offset: Offset(0, animatedOffset),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
           SizedBox(
             width: 52,
             child: Column(
@@ -286,7 +350,9 @@ class _HowStepCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
 

@@ -25,25 +25,25 @@ class AnalysisStepIndicator extends StatelessWidget {
                 radius: 14,
                 backgroundColor: done || active
                     ? AppTheme.primary
-                    : Colors.grey.shade300,
+                    : AppTheme.primary.withValues(alpha: 0.1),
                 child: done
                     ? const Icon(Icons.check, size: 16, color: Colors.white)
                     : active
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.primary.withValues(alpha: 0.5),
+                            ),
+                          ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -53,7 +53,7 @@ class AnalysisStepIndicator extends StatelessWidget {
                     fontWeight: active ? FontWeight.bold : FontWeight.normal,
                     color: active || done
                         ? AppTheme.primary
-                        : Colors.grey.shade600,
+                        : AppTheme.primary.withValues(alpha: 0.45),
                   ),
                 ),
               ),

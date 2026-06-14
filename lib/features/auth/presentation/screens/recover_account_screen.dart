@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
-import 'package:repair_ai/core/utils/app_error_handler.dart';
+import 'package:repair_ai/core/utils/launch_helpers.dart';
+import 'package:repair_ai/features/auth/presentation/widgets/auth_form_widgets.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_shell.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -13,79 +14,74 @@ class RecoverAccountScreen extends StatefulWidget {
 }
 
 class _RecoverAccountScreenState extends State<RecoverAccountScreen> {
-  final _controller = TextEditingController(text: '+254');
   bool _isSending = false;
-  String? _statusMessage;
-  String? _errorMessage;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _sendRecovery() async {
-    if (_controller.text.trim().length < 6) {
-      const message = 'Enter your phone or email.';
-      setState(() => _errorMessage = message);
-      showAppErrorSnackBar(context, message);
-      return;
+  Future<void> _openWebReset() async {
+    setState(() => _isSending = true);
+    try {
+      await launchRepairAiWebsite();
+    } catch (_) {
+      // Browser not available
     }
-    const message =
-        'Password reset is not available in the app yet. Please contact support or use the web dashboard.';
-    setState(() {
-      _isSending = false;
-      _statusMessage = null;
-      _errorMessage = message;
-    });
-    showAppErrorSnackBar(context, message);
+    if (mounted) setState(() => _isSending = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return AuthShell(
       title: l10n.recoverAccountTitle,
       subtitle: l10n.recoverAccountSubtitle,
       showBack: true,
-      errorMessage: _errorMessage,
-      statusMessage: _statusMessage,
       isLoading: _isSending,
-      onDismissError: () => setState(() => _errorMessage = null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            controller: _controller,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: '${l10n.phoneNumberLabel} / ${l10n.emailLabel}',
-              prefixIcon: const Icon(Icons.lock_reset),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.warning.withValues(alpha: 0.3)),
             ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _isSending ? null : _sendRecovery,
-            icon: _isSending
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline, color: AppTheme.warning, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Password reset is handled through the web platform. '
+                    'Open the link below in your browser, or contact your '
+                    'CHP or support for help.',
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 13,
+                      height: 1.4,
                     ),
-                  )
-                : const Icon(Icons.send),
-            label: Text(l10n.sendRecoveryInstructions),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
-          TextButton(
-            onPressed: () => context.go('/auth/sign-in'),
-            child: Text(l10n.backToSignIn),
+          const SizedBox(height: 18),
+          AuthPrimaryButton(
+            onPressed: _openWebReset,
+            isLoading: _isSending,
+            icon: Icons.open_in_browser,
+            label: 'Open Web Platform',
+          ),
+          const SizedBox(height: 12),
+          AuthLinkWrap(
+            children: [
+              TextButton.icon(
+                onPressed: () => context.go('/auth/sign-in'),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: Text(l10n.backToSignIn),
+              ),
+            ],
           ),
         ],
       ),

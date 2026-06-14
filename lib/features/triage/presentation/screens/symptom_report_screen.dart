@@ -227,7 +227,7 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppTheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -350,6 +350,10 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                   compact: compact,
                   heartbeat: heartbeat,
                 ),
+                if (heartbeat == BackendHeartbeatState.offline) ...[
+                  SizedBox(height: compact ? 10 : 12),
+                  _OfflineReportBanner(compact: compact),
+                ],
                 SizedBox(height: compact ? 14 : 18),
                 RepairCard(
                   child: Column(
@@ -385,7 +389,9 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                             ),
                             Text(
                               trimester,
-                              style: TextStyle(color: Colors.grey[600]),
+                              style: TextStyle(
+                                color: AppTheme.primary.withValues(alpha: 0.6),
+                              ),
                             ),
                           ],
                         ),
@@ -684,19 +690,31 @@ class _SymptomReportScreenState extends ConsumerState<SymptomReportScreen> {
                   onPressed:
                       selectedSymptoms.isNotEmpty ? _reviewAndSubmit : null,
                 ),
+                const SizedBox(height: 10),
+                RepairOutlinedButton(
+                  label: 'Chat with Care Assistant',
+                  icon: Icons.chat_outlined,
+                  onPressed: () => context.push('/care'),
+                ),
                 if (selectedSymptoms.isEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
                     l10n.selectSymptomHint,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(
+                      color: AppTheme.primary.withValues(alpha: 0.55),
+                      fontSize: 13,
+                    ),
                   ),
                 ] else ...[
                   const SizedBox(height: 12),
                   Text(
                     l10n.screeningSafetyCopy,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(
+                      color: AppTheme.primary.withValues(alpha: 0.55),
+                      fontSize: 13,
+                    ),
                   ),
                 ],
                 SizedBox(height: compact ? 12 : 24),
@@ -723,14 +741,33 @@ class _ChoiceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onTap(),
-      selectedColor: AppTheme.primary.withValues(alpha: 0.16),
-      labelStyle: TextStyle(
-        color: selected ? AppTheme.primary : null,
-        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppTheme.primary.withValues(alpha: 0.12)
+              : AppTheme.surfaceTinted,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: selected
+                ? AppTheme.primary
+                : AppTheme.primary.withValues(alpha: 0.15),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected
+                ? AppTheme.primary
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            fontSize: RepairSizing.textScale(context, 13),
+          ),
+        ),
       ),
     );
   }
@@ -1014,6 +1051,37 @@ class _GuidedAiHeader extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.35,
                 ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfflineReportBanner extends StatelessWidget {
+  const _OfflineReportBanner({required this.compact});
+  final bool compact;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: AppTheme.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.warning.withValues(alpha: 0.2)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 18, color: AppTheme.warning),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "You're offline. Changes will sync when connected.",
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.warning),
+            ),
           ),
         ],
       ),

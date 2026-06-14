@@ -103,4 +103,20 @@ class RepairSizing {
     if (width < 420) return 56;
     return 72;
   }
+
+  /// Returns a scaled font size based on device width.
+  /// [base] is the default size for a 390px-wide phone.
+  static double textScale(BuildContext context, double base) {
+    final width = MediaQuery.sizeOf(context).width;
+    final factor = (width / 390).clamp(0.82, 1.25);
+    return (base * factor).roundToDouble();
+  }
+
+  /// Button height — taller on desktop for easier clicking.
+  static double buttonHeight(BuildContext context, {double base = 56}) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 380) return base - 4;
+    if (width >= 700) return base + 6;
+    return base;
+  }
 }

@@ -22,8 +22,11 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int currentPage = 0;
+  bool _isNavigating = false;
 
   Future<void> _completeOnboardingAndLogin() async {
+    if (_isNavigating) return;
+    setState(() => _isNavigating = true);
     await ref.read(onboardingCompleteProvider.notifier).markComplete();
     if (mounted) context.go('/auth');
   }
@@ -41,7 +44,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           title: l10n.onboarding2Title,
           description: l10n.onboarding2Description,
           promise: l10n.onboardingPromiseReferral,
-          image: 'assets/illustrations/hospital.jpg',
+          image: 'assets/illustrations/hospital.webp',
           fallbackIcon: Icons.location_on_outlined,
           color: AppTheme.accent,
         ),
@@ -222,17 +225,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (currentPage == onboardingData.length - 1) {
-                              HapticFeedback.lightImpact();
-                              _completeOnboardingAndLogin();
-                            } else {
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 450),
-                                curve: Curves.easeInOutCubic,
-                              );
-                            }
-                          },
+                          onPressed: _isNavigating
+                              ? null
+                              : () {
+                                  if (currentPage ==
+                                      onboardingData.length - 1) {
+                                    HapticFeedback.lightImpact();
+                                    _completeOnboardingAndLogin();
+                                  } else {
+                                    _pageController.nextPage(
+                                      duration:
+                                          const Duration(milliseconds: 450),
+                                      curve: Curves.easeInOutCubic,
+                                    );
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: itemColor,
                             foregroundColor: Colors.white,
@@ -240,15 +247,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               borderRadius: BorderRadius.circular(18),
                             ),
                           ),
-                          child: Text(
-                            currentPage == onboardingData.length - 1
-                                ? l10n.getStartedButton
-                                : l10n.continueButton,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isNavigating
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  currentPage == onboardingData.length - 1
+                                      ? l10n.getStartedButton
+                                      : l10n.continueButton,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

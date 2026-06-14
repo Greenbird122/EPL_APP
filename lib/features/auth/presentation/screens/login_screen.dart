@@ -111,10 +111,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             AuthTextField(
               controller: _phoneController,
-              label: l10n.signInPhoneLabel,
+              label: '${l10n.signInPhoneLabel} / ${l10n.usernameCareIdLabel}',
               helperText: l10n.signInPhoneHelper,
               icon: Icons.phone_android,
-              keyboardType: TextInputType.phone,
+              keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
               onChanged: (_) {
                 if (_errorMessage != null) {
@@ -127,9 +127,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   return l10n.signInPhoneRequired;
                 }
                 final normalized = value.replaceAll(RegExp(r'[\s-]'), '');
-                final valid =
+                final validPhone =
                     RegExp(r'^(?:0|254|\+254)7\d{8}$').hasMatch(normalized);
-                if (!valid) {
+                final validCareId =
+                    value.length >= 3 && !value.contains(RegExp(r'\s'));
+                if (!validPhone && !validCareId) {
                   return l10n.signInPhoneInvalid;
                 }
                 return null;

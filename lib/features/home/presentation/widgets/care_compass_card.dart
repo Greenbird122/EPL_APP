@@ -65,7 +65,7 @@ class _CareCompassCardState extends State<CareCompassCard>
 
     return ImageAccentCard(
       imageAsset: state == CareCompassState.referralNeeded
-          ? 'assets/illustrations/hospital.jpg'
+          ? 'assets/illustrations/hospital.webp'
           : 'assets/illustrations/mama.jpeg',
       accentColor: color,
       imageFit: ImageAccentFit.visibleTop,

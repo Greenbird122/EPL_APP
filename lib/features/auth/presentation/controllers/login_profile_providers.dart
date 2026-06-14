@@ -3,8 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ProfileFormData {
   final String name;
   final String email;
+  final String? phone;
+  final String? role;
+  final int? userId;
+  final List<String> permissions;
+  final List<Map<String, dynamic>> rbacRoles;
 
-  const ProfileFormData({required this.name, required this.email});
+  const ProfileFormData({
+    required this.name,
+    required this.email,
+    this.phone,
+    this.role,
+    this.userId,
+    this.permissions = const [],
+    this.rbacRoles = const [],
+  });
 }
 
 /// Holds the latest login/profile form values (mocked in this app).
@@ -19,6 +32,11 @@ final profileNameProvider = Provider<String?>((ref) {
 final profileEmailProvider = Provider<String?>((ref) {
   final data = ref.watch(profileFormDataProvider);
   return data?.email;
+});
+
+final profilePhoneProvider = Provider<String?>((ref) {
+  final data = ref.watch(profileFormDataProvider);
+  return data?.phone;
 });
 
 class CurrentPatientContext {

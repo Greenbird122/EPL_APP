@@ -31,7 +31,7 @@ class TrustChipsRow extends StatelessWidget {
             backgroundColor: AppTheme.primary.withValues(
               alpha: isDark ? 0.25 : 0.12,
             ),
-            labelStyle: TextStyle(
+            labelStyle: const TextStyle(
               color: AppTheme.primary,
               fontWeight: FontWeight.w600,
               fontSize: 12,
@@ -88,9 +88,9 @@ class ImpactStatsRow extends StatelessWidget {
         Text(
           l10n.platformImpactSource,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 11,
-          ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 11,
+              ),
         ),
       ],
     );

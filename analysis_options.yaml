@@ -6,4 +6,4 @@ analyzer:
 
 linter:
   rules:
-    prefer_const_constructors: false
+    prefer_const_constructors: true

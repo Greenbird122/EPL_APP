@@ -31,10 +31,14 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
   Timer? _rotateTimer;
   bool _taskDone = false;
   bool _minElapsed = false;
+  bool _exiting = false;
   late final AnimationController _ambientController;
   late final AnimationController _progressController;
   late final AnimationController _entryController;
   late final AnimationController _logoController;
+  late final AnimationController _exitController;
+  late final AnimationController _particleController;
+  final int _displayedPercent = 0;
 
   static const _loadingPhrases = [
     'Preparing your care space',
@@ -60,6 +64,14 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 6),
+    )..repeat();
+    _exitController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
     )..repeat();
     _start();
   }
@@ -94,9 +106,12 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
   }
 
   void _tryFinish() {
-    if (_taskDone && _minElapsed && mounted) {
+    if (_taskDone && _minElapsed && mounted && !_exiting) {
+      _exiting = true;
       _rotateTimer?.cancel();
-      widget.onFinished();
+      _exitController.forward().then((_) {
+        if (mounted) widget.onFinished();
+      });
     }
   }
 
@@ -107,6 +122,8 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
     _progressController.dispose();
     _entryController.dispose();
     _logoController.dispose();
+    _exitController.dispose();
+    _particleController.dispose();
     super.dispose();
   }
 
@@ -128,8 +145,16 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
           _progressController,
           _entryController,
           _logoController,
+          _exitController,
+          _particleController,
         ]),
         builder: (context, _) {
+          final exitOpacity = disableAnimations
+              ? 1.0
+              : 1.0 - Curves.easeIn.transform(_exitController.value);
+          final exitScale = disableAnimations
+              ? 1.0
+              : 1.0 + Curves.easeIn.transform(_exitController.value) * 0.06;
           final t = disableAnimations ? 0.0 : _ambientController.value;
           final logoT = disableAnimations ? 0.875 : _logoController.value;
           final phase = _SplashPhase.from(logoT);
@@ -144,7 +169,7 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
             height: double.infinity,
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment(-0.12, -0.22),
+                center: const Alignment(-0.12, -0.22),
                 radius: 1.12,
                 colors: [
                   palette.center,
@@ -162,6 +187,15 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
                     painter: _RepairSplashPainter(
                       progress: t,
                       animate: !disableAnimations,
+                      palette: palette,
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _FloatingParticlesPainter(
+                      progress:
+                          disableAnimations ? 0.0 : _particleController.value,
                       palette: palette,
                     ),
                   ),
@@ -209,15 +243,17 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            FadeTransition(
-                              opacity: AlwaysStoppedAnimation(entrance),
-                              child: Transform.scale(
-                                scale: 0.88 + entrance * 0.12,
-                                child: _GlowLogo(
-                                  pulseProgress: t,
-                                  phase: phase,
-                                  size: logoSize,
-                                  animate: !disableAnimations,
+                            RepaintBoundary(
+                              child: FadeTransition(
+                                opacity: AlwaysStoppedAnimation(entrance),
+                                child: Transform.scale(
+                                  scale: 0.88 + entrance * 0.12,
+                                  child: _GlowLogo(
+                                    pulseProgress: t,
+                                    phase: phase,
+                                    size: logoSize,
+                                    animate: !disableAnimations,
+                                  ),
                                 ),
                               ),
                             ),
@@ -253,49 +289,55 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
                               ),
                             ),
                             SizedBox(height: tightHeight ? 8 : 12),
-                            _LoadingPhrase(
-                              phrase: phrase,
-                              animate: !disableAnimations,
-                              palette: palette,
+                            RepaintBoundary(
+                              child: _LoadingPhrase(
+                                phrase: phrase,
+                                animate: !disableAnimations,
+                                palette: palette,
+                              ),
                             ),
                             SizedBox(
                                 height: tightHeight ? 10 : (short ? 16 : 28)),
-                            _LoadingBar(
-                              value: _progressController.value,
-                              shimmerProgress: t,
-                              animate: !disableAnimations,
-                              palette: palette,
+                            RepaintBoundary(
+                              child: _LoadingBar(
+                                value: _progressController.value,
+                                shimmerProgress: t,
+                                animate: !disableAnimations,
+                                palette: palette,
+                              ),
                             ),
                             SizedBox(
                                 height: tightHeight ? 10 : (short ? 16 : 26)),
-                            AnimatedSwitcher(
-                              duration: disableAnimations
-                                  ? Duration.zero
-                                  : const Duration(milliseconds: 520),
-                              transitionBuilder: (child, animation) {
-                                final offset = Tween<Offset>(
-                                  begin: const Offset(0, 0.08),
-                                  end: Offset.zero,
-                                ).animate(
-                                  CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutCubic,
-                                  ),
-                                );
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: offset,
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: _SplashQuote(
-                                key: ValueKey(quote),
-                                quote: quote,
-                                author: l10n.motherQuoteAuthor,
-                                palette: palette,
-                                compact: tightHeight,
+                            RepaintBoundary(
+                              child: AnimatedSwitcher(
+                                duration: disableAnimations
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 520),
+                                transitionBuilder: (child, animation) {
+                                  final offset = Tween<Offset>(
+                                    begin: const Offset(0, 0.08),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+                                  );
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: offset,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: _SplashQuote(
+                                  key: ValueKey(quote),
+                                  quote: quote,
+                                  author: l10n.motherQuoteAuthor,
+                                  palette: palette,
+                                  compact: tightHeight,
+                                ),
                               ),
                             ),
                           ],
@@ -303,18 +345,30 @@ class _QuoteLoadingScreenState extends State<QuoteLoadingScreen>
                       );
 
                       if (tightHeight) {
-                        return SingleChildScrollView(
-                          physics: const ClampingScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: availableHeight,
+                        return Transform.scale(
+                          scale: exitScale,
+                          child: Opacity(
+                            opacity: exitOpacity,
+                            child: SingleChildScrollView(
+                              physics: const ClampingScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: availableHeight,
+                                ),
+                                child: Center(child: body),
+                              ),
                             ),
-                            child: Center(child: body),
                           ),
                         );
                       }
 
-                      return Center(child: body);
+                      return Transform.scale(
+                        scale: exitScale,
+                        child: Opacity(
+                          opacity: exitOpacity,
+                          child: Center(child: body),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -690,7 +744,7 @@ class _LoadingPhrase extends StatelessWidget {
   }
 }
 
-class _LoadingBar extends StatelessWidget {
+class _LoadingBar extends StatefulWidget {
   const _LoadingBar({
     required this.value,
     required this.shimmerProgress,
@@ -702,6 +756,22 @@ class _LoadingBar extends StatelessWidget {
   final double shimmerProgress;
   final bool animate;
   final _SplashPalette palette;
+
+  @override
+  State<_LoadingBar> createState() => _LoadingBarState();
+}
+
+class _LoadingBarState extends State<_LoadingBar> {
+  int _displayedPercent = 0;
+
+  @override
+  void didUpdateWidget(covariant _LoadingBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final target = (widget.value.clamp(0, 1) * 100).round();
+    if (target != _displayedPercent && target > _displayedPercent) {
+      _displayedPercent = target;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -723,25 +793,33 @@ class _LoadingBar extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: FractionallySizedBox(
-                      widthFactor: value.clamp(0, 1),
+                      widthFactor: widget.value.clamp(0, 1),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
                               Colors.white,
-                              palette.accent,
-                              palette.center.withValues(alpha: 0.92),
+                              widget.palette.accent,
+                              widget.palette.center.withValues(alpha: 0.92),
                             ],
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  widget.palette.accent.withValues(alpha: 0.5),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  if (animate)
+                  if (widget.animate)
                     FractionallySizedBox(
-                      widthFactor: value.clamp(0, 1),
+                      widthFactor: widget.value.clamp(0, 1),
                       child: Align(
-                        alignment: Alignment(-1 + shimmerProgress * 2.4, 0),
+                        alignment:
+                            Alignment(-1 + widget.shimmerProgress * 2.4, 0),
                         child: Container(
                           width: 54,
                           decoration: BoxDecoration(
@@ -761,12 +839,16 @@ class _LoadingBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            '${(value.clamp(0, 1) * 100).round()}%',
-            style: const TextStyle(
-              color: Colors.white,
-              fontFeatures: [FontFeature.tabularFigures()],
-              fontWeight: FontWeight.w800,
+          SizedBox(
+            width: 38,
+            child: Text(
+              '$_displayedPercent%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontFeatures: [FontFeature.tabularFigures()],
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -948,5 +1030,39 @@ class _RepairSplashPainter extends CustomPainter {
     return oldDelegate.progress != progress ||
         oldDelegate.animate != animate ||
         oldDelegate.palette != palette;
+  }
+}
+
+class _FloatingParticlesPainter extends CustomPainter {
+  _FloatingParticlesPainter({
+    required this.progress,
+    required this.palette,
+  });
+
+  final double progress;
+  final _SplashPalette palette;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rng = math.Random(42);
+    for (var i = 0; i < 14; i++) {
+      final x = rng.nextDouble() * size.width;
+      final baseY = rng.nextDouble() * size.height;
+      final drift = (progress + rng.nextDouble() * 0.5) % 1.0;
+      final y = (baseY - drift * size.height * 0.6) % size.height;
+      if (y < 0) continue;
+      final radius = 1.2 + rng.nextDouble() * 1.8;
+      final opacity =
+          (0.15 + rng.nextDouble() * 0.25) * (1 - drift).clamp(0.0, 1.0);
+      final paint = Paint()
+        ..color = palette.glass.withValues(alpha: opacity)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FloatingParticlesPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.palette != palette;
   }
 }
