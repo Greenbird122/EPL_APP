@@ -6,7 +6,7 @@ const kEmergencyPhone = '999';
 const kRepairAiUssdCode = '*384#';
 const kRepairAiVoiceAssistantNumber = String.fromEnvironment(
   'REPAIR_AI_VOICE_ASSISTANT_NUMBER',
-  defaultValue: '',
+  defaultValue: '+254711082565',
 );
 
 Future<void> launchEmergencyCall() async {

@@ -945,7 +945,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ussdCopied => 'USSD code copied: *384#';
 
   @override
-  String get homeSupportChannelsSuffix => 'Use the app, WhatsApp, or USSD.';
+  String get homeSupportChannelsSuffix => 'Use the app, USSD, or phone.';
 
   @override
   String homeGreeting(String name) => 'Good ${_dayPart()}, $name';
@@ -1040,7 +1040,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeSupportStripSubtitle =>
-      'Use WhatsApp, USSD, or emergency calling when you need support.';
+      'Use the website, USSD, phone number, or mobile app for support.';
 
   @override
   String get todayCareTitle => 'Today\'s Care';
@@ -1218,6 +1218,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transport => 'Transport';
 
   @override
+  String get website => 'Website';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get mobileApp => 'Mobile App';
+
+  @override
   String get findCareTitle => 'Find Care';
 
   @override
@@ -1372,10 +1381,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'AI screening has checked your symptoms and referral need.';
 
   @override
-  String get localScreeningReferralGuidance =>
-      'Risk screening has checked your symptoms. Referral guidance is based on the current safety rules.';
-
-  @override
   String get findVerifiedCareNow => 'Find verified care now';
 
   @override
@@ -1492,10 +1497,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiReadinessChecking => 'Checking AI';
 
   @override
-  String get localSafetyScreening => 'Local safety screening';
+  String get aiStagePreparing => 'Preparing your report';
 
   @override
-  String get localSafetyFallback => 'Local safety fallback';
+  String get aiStagePreparingSubtitle =>
+      'We are checking your care profile and symptom details.';
+
+  @override
+  String get aiStagePreparingShort => 'Prepare';
+
+  @override
+  String get aiStageSending => 'Sending symptoms securely';
+
+  @override
+  String get aiStageSendingSubtitle =>
+      'Your symptoms are being saved for this care check.';
+
+  @override
+  String get aiStageSendingShort => 'Send';
+
+  @override
+  String get aiStageAnalyzing => 'AI screening in progress';
+
+  @override
+  String get aiStageAnalyzingSubtitle =>
+      'REPAIR-AI is checking risk level, urgency, and what to do next.';
+
+  @override
+  String get aiStageAnalyzingShort => 'Screen';
+
+  @override
+  String get aiStageReferral => 'Checking referral need';
+
+  @override
+  String get aiStageReferralSubtitle =>
+      'We are looking for signs that verified care may be needed.';
+
+  @override
+  String get aiStageReferralShort => 'Referral';
+
+  @override
+  String get aiStageSaving => 'Saving your care record';
+
+  @override
+  String get aiStageSavingSubtitle =>
+      'Your result is being prepared for your care timeline.';
+
+  @override
+  String get aiStageSavingShort => 'Save';
+
+  @override
+  String get aiUnavailableActionsTitle => 'AI screening is not ready yet';
+
+  @override
+  String get aiUnavailableActionsSubtitle =>
+      'We will not guess a risk result. You can retry, edit your symptoms, contact support, or find verified care.';
+
+  @override
+  String get editSymptoms => 'Edit symptoms';
+
+  @override
+  String get contactSupport => 'Contact support';
+
+  @override
+  String get typeInstead => 'Type instead';
+
+  @override
+  String get retryVoiceUpload => 'Retry voice upload';
+
+  @override
+  String get voiceRequestingMic => 'Checking microphone access...';
+
+  @override
+  String get voiceRecordingNow => 'Recording now. Speak naturally.';
+
+  @override
+  String get voiceStopping => 'Stopping recording...';
+
+  @override
+  String get voiceUploading => 'Sending voice recording...';
 
   @override
   String get patientStatedAge => 'Patient-stated age';
@@ -1509,11 +1589,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'If you mention your age, we treat it as patient-stated context. The app does not guess age from symptoms.';
 
   @override
-  String get useLocalSafetyScreening => 'Use local safety screening';
-
-  @override
   String get aiServiceUnavailable =>
-      'Backend AI screening is unavailable. You can try again or use local safety screening.';
+      'AI screening is unavailable right now. Please retry, edit symptoms, contact support, or seek care if symptoms feel severe.';
 
   @override
   String get patientProfileRequiredForAi =>
@@ -1573,6 +1650,114 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ancContextForRisk =>
       'ANC context considered alongside this screening';
+
+  // -- Risk result screen labels
+  @override
+  String get yourAssessment => 'Your Assessment';
+
+  @override
+  String get riskCallToActionHigh => 'Seek Care Now';
+
+  @override
+  String get riskCallToActionModerate => 'Monitor Closely';
+
+  @override
+  String get riskCallToActionLow => 'Continue Check-ups';
+
+  @override
+  String confidenceLabel(String pct) => 'Confidence: $pct%';
+
+  @override
+  String get riskUrgentInstructions =>
+      'Do not wait. Go to a health facility now or call for help.';
+
+  @override
+  String get whatYouReported => 'What you reported';
+
+  @override
+  String get whatYouShouldDo => 'What you should do';
+
+  @override
+  String get newCheck => 'New Check';
+
+  @override
+  String get findFacility => 'Find Facility';
+
+  @override
+  String get viewCare => 'View Care';
+
+  @override
+  String get discussResultWithAi => 'Discuss this result with AI';
+
+  @override
+  String get screeningSourceAiAssisted => 'AI Assisted';
+
+  @override
+  String get screeningSourceQuickCheck => 'Quick Check';
+
+  @override
+  String get riskSubtitleHigh => 'This needs urgent medical attention';
+
+  @override
+  String get riskSubtitleModerate => 'This needs a check-up soon';
+
+  @override
+  String get riskSubtitleLow => 'Keep up with your regular visits';
+
+  @override
+  String weeksPregnantWithTrimester(String weeks, String trimester) =>
+      '$weeks weeks pregnant • $trimester';
+
+  // -- Chat / case list labels
+  @override
+  String get aiAnalyzingYourCase => 'AI is analyzing your case...';
+
+  @override
+  String get submitSymptomsForFirstCase =>
+      'Submit symptoms below to create your first case.';
+
+  @override
+  String get chatWithCareAssistantHint =>
+      'Your chat with the Care Assistant will appear here.';
+
+  @override
+  String get chatSenderYou => 'You';
+
+  @override
+  String get chatSenderCareAssistant => 'Care Assistant';
+
+  @override
+  String get localSafetyFallback => 'Local safety guidance is available.';
+
+  @override
+  String get useLocalSafetyScreening => 'Use local safety screening';
+
+  @override
+  String get caseRiskHigh => 'High Risk';
+
+
+  @override
+  String get caseRiskModerate => 'Moderate Risk';
+
+  @override
+  String get caseRiskLow => 'Low Risk';
+
+  @override
+  String get caseStatusActive => 'Active';
+
+  @override
+  String get caseStatusAnalyzing => 'Analyzing';
+
+  @override
+  String get caseStatusReferred => 'Referred';
+
+  // -- Referral / action labels
+  @override
+  String get whatsApp => 'WhatsApp';
+
+  // -- Video splash
+  @override
+  String get appMaternalHealthPlatform => 'Maternal Health Platform';
 }
 
 String _dayPart() {

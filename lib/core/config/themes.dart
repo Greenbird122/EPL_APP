@@ -2,30 +2,34 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   static const Color primary = Color(0xFF6B4EFF);
+  static const Color primaryLight = Color(0xFF8B7AFF);
+  static const Color primaryDeep = Color(0xFF4A35CC);
   static const Color accent = Color(0xFFFF6B9D);
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFFFC107);
   static const Color error = Color(0xFFEF4444);
   static const double radius = 12;
 
-  static const Color background = Color(0xFFF8FAFC);
-  static const Color surface = Colors.white;
-  static const Color cardBorder = Color(0xFFE7E9F3);
+  // Ambient purple-tinted surfaces
+  static const Color background = Color(0xFFF5F3FF);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceTinted = Color(0xFFF8F6FF);
+  static const Color cardBorder = Color(0xFFE2DEF0);
 
-  static const Color darkBackground = Color(0xFF121218);
-  static const Color darkSurface = Color(0xFF1E1E28);
+  static const Color darkBackground = Color(0xFF1A1625);
+  static const Color darkSurface = Color(0xFF252133);
 
   static ThemeData get lightTheme => _buildTheme(
-    brightness: Brightness.light,
-    scaffold: background,
-    surface: surface,
-  );
+        brightness: Brightness.light,
+        scaffold: background,
+        surface: surface,
+      );
 
   static ThemeData get darkTheme => _buildTheme(
-    brightness: Brightness.dark,
-    scaffold: darkBackground,
-    surface: darkSurface,
-  );
+        brightness: Brightness.dark,
+        scaffold: darkBackground,
+        surface: darkSurface,
+      );
 
   static ThemeData _buildTheme({
     required Brightness brightness,
@@ -45,24 +49,27 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: scaffold,
       fontFamily: 'Inter',
-      appBarTheme: const AppBarTheme(
-        backgroundColor: primary,
+      appBarTheme: AppBarTheme(
+        backgroundColor: isDark ? darkSurface : primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       cardTheme: CardThemeData(
-        color: surface,
-        elevation: isDark ? 1 : 2,
-        shadowColor: primary.withValues(alpha: isDark ? 0.28 : 0.12),
+        color: isDark ? darkSurface : surfaceTinted,
+        elevation: isDark ? 1 : 1,
+        shadowColor: primary.withValues(alpha: isDark ? 0.15 : 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(color: isDark ? Colors.white12 : cardBorder),
+          side: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.06) : cardBorder,
+          ),
         ),
       ),
-      dividerColor: isDark ? Colors.white12 : Colors.grey.shade200,
+      dividerColor:
+          isDark ? Colors.white10 : AppTheme.primary.withValues(alpha: 0.12),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? darkSurface : Colors.grey.shade50,
+        fillColor: isDark ? darkSurface : surfaceTinted,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(radius)),
       ),
       textTheme: const TextTheme(
@@ -89,9 +96,9 @@ class AppTheme {
       ),
       iconTheme: const IconThemeData(size: 28),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: surface,
+        backgroundColor: isDark ? darkSurface : surfaceTinted,
         selectedItemColor: primary,
-        unselectedItemColor: isDark ? Colors.white54 : Colors.grey,
+        unselectedItemColor: primary.withValues(alpha: isDark ? 0.4 : 0.35),
       ),
     );
   }

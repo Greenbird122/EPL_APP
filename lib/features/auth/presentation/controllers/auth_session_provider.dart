@@ -5,35 +5,48 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login_profile_providers.dart';
 
-enum AuthSessionStatus { signedOut, mother, provider, loading, error }
+enum AuthSessionStatus { signedOut, patient, chp, loading, error }
 
 class AuthSession {
-  const AuthSession({required this.status, this.errorMessage});
+  const AuthSession({
+    required this.status,
+    this.errorMessage,
+    this.patientId,
+  });
 
   const AuthSession.signedOut() : this(status: AuthSessionStatus.signedOut);
   const AuthSession.loading() : this(status: AuthSessionStatus.loading);
-  const AuthSession.mother() : this(status: AuthSessionStatus.mother);
-  const AuthSession.provider() : this(status: AuthSessionStatus.provider);
+  // Named 'patient' to align with backend role name 'patient'
+  const AuthSession.patient({int? patientId})
+      : this(status: AuthSessionStatus.patient, patientId: patientId);
+  // Named 'chp' to align with backend role name 'chp' (Community Health Promoter)
+  const AuthSession.chp({int? patientId})
+      : this(status: AuthSessionStatus.chp, patientId: patientId);
   const AuthSession.error(String message)
       : this(status: AuthSessionStatus.error, errorMessage: message);
 
   final AuthSessionStatus status;
   final String? errorMessage;
+  final int? patientId;
 
   bool get isLoggedIn =>
-      status == AuthSessionStatus.mother ||
-      status == AuthSessionStatus.provider;
+      status == AuthSessionStatus.patient ||
+      status == AuthSessionStatus.chp;
 
-  bool get isProvider => status == AuthSessionStatus.provider;
+  bool get isProvider => status == AuthSessionStatus.chp;
 
   String get storageValue => status.name;
 
   static AuthSession fromStorage(String? value) {
     switch (value) {
+      // Legacy 'mother' key kept for backward-compat with existing stored prefs
       case 'mother':
-        return const AuthSession.mother();
+      case 'patient':
+        return const AuthSession.patient();
+      // Legacy 'provider' key kept for backward-compat with existing stored prefs
       case 'provider':
-        return const AuthSession.provider();
+      case 'chp':
+        return const AuthSession.chp();
       default:
         return const AuthSession.signedOut();
     }
@@ -81,7 +94,8 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
           state = stored;
         }
       } else {
-        state = const AuthSession.signedOut();
+        // No backend token — restore demo session if one was stored
+        state = stored.isLoggedIn ? stored : const AuthSession.signedOut();
       }
     } finally {
       if (mounted) {
@@ -91,12 +105,13 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   Future<void> signIn({
-    AuthSessionStatus status = AuthSessionStatus.mother,
+    AuthSessionStatus status = AuthSessionStatus.patient,
+    int? patientId,
   }) async {
     final next = switch (status) {
-      AuthSessionStatus.provider => const AuthSession.provider(),
-      AuthSessionStatus.mother => const AuthSession.mother(),
-      _ => const AuthSession.mother(),
+      AuthSessionStatus.chp => AuthSession.chp(patientId: patientId),
+      AuthSessionStatus.patient => AuthSession.patient(patientId: patientId),
+      _ => AuthSession.patient(patientId: patientId),
     };
     state = next;
     await _persistSession(next);
@@ -122,41 +137,47 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
       await AuthSessionNotifier.acceptTerms();
       return next;
     } catch (error) {
-      final message = _messageForError(error);
-      state = AuthSession.error(message);
       rethrow;
     }
   }
 
   Future<AuthSession> registerPatientWithBackend({
-    required String username,
-    required String email,
     required String password,
     required String passwordConfirm,
     required String fullName,
     required String phone,
+    required String country,
+    required String county,
+    required String subCounty,
     bool rememberMe = true,
   }) async {
     state = const AuthSession.loading();
     final names = _splitName(fullName);
     try {
       await _ref.read(authApiProvider).registerPatient({
-        'username': username.trim(),
-        'email': email.trim(),
         'first_name': names.$1,
         'last_name': names.$2,
         'phone': phone.trim(),
         'password': password,
         'password_confirm': passwordConfirm,
+        'country': country,
+        'county': county,
+        'sub_county': subCounty,
       });
-      return signInWithBackend(
-        username: phone,
-        password: password,
-        rememberMe: rememberMe,
-      );
+      try {
+        return await signInWithBackend(
+          username: phone,
+          password: password,
+          rememberMe: rememberMe,
+        );
+      } catch (_) {
+        return signInWithBackend(
+          username: phone,
+          password: password,
+          rememberMe: rememberMe,
+        );
+      }
     } catch (error) {
-      final message = _messageForError(error);
-      state = AuthSession.error(message);
       rethrow;
     }
   }
@@ -175,8 +196,6 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
         await signOutBackend();
         return;
       }
-      final message = _messageForError(error);
-      state = AuthSession.error(message);
       rethrow;
     }
   }
@@ -244,13 +263,15 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
 
   AuthSession _sessionForBackendRole(String? role) {
     return switch (role) {
-      'patient' => const AuthSession.mother(),
-      'chp' => const AuthSession.provider(),
+      // Backend role 'patient' → mobile AuthSessionStatus.patient
+      'patient' => const AuthSession.patient(),
+      // Backend role 'chp' → mobile AuthSessionStatus.chp
+      'chp' => const AuthSession.chp(),
       'admin' || 'moh' || 'nurse' || 'clinician' => throw const ApiException(
           'This account is managed on the web dashboard. Please use the website for this role.',
           statusCode: 403,
         ),
-      _ => throw ApiException(
+      _ => throw const ApiException(
           'This account type is not available in the mobile app yet.',
           statusCode: 403,
         ),
@@ -258,17 +279,53 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
   }
 
   void _setProfileFromBackend(Map<String, dynamic> data) {
-    final name = (data['full_name'] ?? data['username'] ?? '').toString();
+    final fullName = (data['full_name'] ?? '').toString();
     final email = (data['email'] ?? '').toString();
-    if (name.isEmpty && email.isEmpty) return;
+    final phone = data['phone'] as String?;
+    final role = data['role'] as String?;
+    final userId = data['user_id'] as int? ?? data['id'] as int?;
+    final patientId = data['patient_id'] as int? ?? userId;
+    final perms = (data['permissions'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        const <String>[];
+    final roles = (data['rbac_roles'] as List<dynamic>?)
+            ?.map((e) => Map<String, dynamic>.from(e as Map))
+            .toList() ??
+        const <Map<String, dynamic>>[];
+
+    final name = fullName.isEmpty
+        ? (email.isEmpty ? 'REPAIR-AI user' : email)
+        : fullName;
+    final displayEmail = email.isEmpty ? 'Signed in' : email;
+
     _ref.read(profileFormDataProvider.notifier).state = ProfileFormData(
-      name: name.isEmpty ? 'REPAIR-AI user' : name,
-      email: email.isEmpty ? 'Signed in' : email,
+      name: name,
+      email: displayEmail,
+      phone: phone,
+      role: role,
+      userId: userId,
+      permissions: perms,
+      rbacRoles: roles,
     );
+
+    // Set patient context for patient users and update state with patient ID
+    if (state.status == AuthSessionStatus.patient && patientId != null) {
+      _ref.read(currentPatientContextProvider.notifier).state =
+          CurrentPatientContext(
+        id: patientId,
+        name: name,
+      );
+      // Update state to include patient ID
+      state = AuthSession.patient(patientId: patientId);
+    } else if (state.status == AuthSessionStatus.chp &&
+        patientId != null) {
+      state = AuthSession.chp(patientId: patientId);
+    }
   }
 
   Future<void> _loadLinkedPatientProfileIfNeeded(AuthSession session) async {
-    if (session.status != AuthSessionStatus.mother) {
+    if (session.status != AuthSessionStatus.patient) {
       _ref.read(currentPatientContextProvider.notifier).state = null;
       return;
     }
@@ -293,11 +350,6 @@ class AuthSessionNotifier extends StateNotifier<AuthSession> {
     if (parts.isEmpty || parts.first.isEmpty) return ('', '');
     if (parts.length == 1) return (parts.first, '');
     return (parts.first, parts.skip(1).join(' '));
-  }
-
-  String _messageForError(Object error) {
-    if (error is ApiException) return error.message;
-    return 'We could not reach care services. Check your internet and try again.';
   }
 
   static Future<bool> hasAcceptedTerms() async {

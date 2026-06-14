@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/network/backend_services.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 
@@ -45,7 +44,10 @@ class TriageController {
     final profile = await patientApi.myProfile();
     final patientId = profile['id'] as int?;
     if (patientId == null) {
-      throw Exception('Patient profile is missing an id.');
+      throw const ApiException(
+        'Patient profile is missing an id.',
+        statusCode: 404,
+      );
     }
 
     final symptomsText = _symptomText(draft, l10n);
@@ -60,52 +62,47 @@ class TriageController {
       final Map<String, dynamic> data => data['id'] as int?,
       _ => visit['id'] as int?,
     };
-    final data = await triageApi.deepseekAnalyze({
-      'pregnancy_status': 'currently pregnant',
-      'gestation_weeks': _gestationBucket(draft.gestationalAge),
-      'main_symptom': draft.symptoms.isEmpty
-          ? 'other'
-          : SymptomCatalog.label(l10n, draft.symptoms.first),
-      'symptom_duration': _durationLabel(draft.duration),
-      'free_text': symptomsText,
-    });
+    Map<String, dynamic>? persistedResult;
+
+    if (visitId != null) {
+      try {
+        final persisted = await triageApi.runTriage(visitId);
+        final resultData = persisted['result'];
+        if (resultData is Map<String, dynamic>) {
+          persistedResult = resultData;
+        }
+      } catch (_) {
+        persistedResult = null;
+      }
+    }
+
+    late final Map<String, dynamic> data;
+    try {
+      data = await triageApi.deepseekAnalyze({
+        'pregnancy_status': 'currently pregnant',
+        'gestation_weeks': _gestationBucket(draft.gestationalAge),
+        'main_symptom': draft.symptoms.isEmpty
+            ? 'other'
+            : SymptomCatalog.label(l10n, draft.symptoms.first),
+        'symptom_duration': _durationLabel(draft.duration),
+        'free_text': symptomsText,
+      });
+    } on ApiException catch (error) {
+      if (_canUsePersistedTriage(error, persistedResult)) {
+        final result = _resultFromPersistedTriage(persistedResult!, l10n);
+        _ref.read(triageResultProvider.notifier).state = result;
+        return result;
+      }
+      rethrow;
+    }
 
     final result = _resultFromBackend(
       data,
       l10n,
-      backendTriageId: null,
+      backendTriageId: persistedResult?['id'] as int?,
     );
     _ref.read(triageResultProvider.notifier).state = result;
-    if (visitId != null) {
-      unawaited(_persistBackendTriage(visitId, result));
-    }
     return result;
-  }
-
-  Future<void> _persistBackendTriage(
-      int visitId, TriageResult shownResult) async {
-    try {
-      final persisted = await _ref.read(triageApiProvider).runTriage(visitId);
-      final persistedResult = persisted['result'];
-      final persistedTriageId = persistedResult is Map<String, dynamic>
-          ? persistedResult['id'] as int?
-          : null;
-      if (persistedTriageId == null) return;
-      final current = _ref.read(triageResultProvider);
-      if (current != shownResult) return;
-      _ref.read(triageResultProvider.notifier).state = TriageResult(
-        riskLevel: shownResult.riskLevel,
-        confidence: shownResult.confidence,
-        reasons: shownResult.reasons,
-        recommendation: shownResult.recommendation,
-        urgencyHours: shownResult.urgencyHours,
-        needsReferral: shownResult.needsReferral,
-        aiScreened: shownResult.aiScreened,
-        backendTriageId: persistedTriageId,
-      );
-    } catch (_) {
-      // The user-facing DeepSeek result is already shown; persistence can retry later.
-    }
   }
 
   TriageResult runLocalFallbackAssessment({
@@ -156,10 +153,8 @@ class TriageController {
   }
 
   TriageResult _resultFromBackend(
-    Map<String, dynamic> data,
-    AppLocalizations l10n, {
-    int? backendTriageId,
-  }) {
+      Map<String, dynamic> data, AppLocalizations l10n,
+      {int? backendTriageId}) {
     final level = switch ('${data['risk_level']}'.toLowerCase()) {
       'high' => RiskLevel.high,
       'moderate' => RiskLevel.moderate,
@@ -179,7 +174,7 @@ class TriageController {
       riskLevel: level,
       confidence: level == RiskLevel.high ? 0.92 : 0.86,
       reasons: [
-        l10n.aiScreeningReferralChecked,
+        'Backend AI screening reviewed your symptoms.',
         if (needsReferral) 'Referral support may be needed.',
         if (urgency.isNotEmpty && urgency != 'null') 'Urgency: $urgency.',
       ],
@@ -188,6 +183,52 @@ class TriageController {
       needsReferral: needsReferral,
       aiScreened: true,
       backendTriageId: backendTriageId,
+    );
+  }
+
+  bool _canUsePersistedTriage(
+    ApiException error,
+    Map<String, dynamic>? persistedResult,
+  ) {
+    return persistedResult != null &&
+        (error.statusCode == 503 ||
+            error.statusCode == 502 ||
+            error.statusCode == 504);
+  }
+
+  TriageResult _resultFromPersistedTriage(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final level = switch ('${data['risk_level']}'.toLowerCase()) {
+      'high' => RiskLevel.high,
+      'moderate' => RiskLevel.moderate,
+      _ => RiskLevel.low,
+    };
+    final recommendation =
+        '${data['recommendation'] ?? 'Please consult your health worker.'}';
+    final riskScore = data['risk_score'];
+    final needsReferral = level == RiskLevel.high ||
+        (riskScore is num && riskScore >= 0.5) ||
+        recommendation.toLowerCase().contains('refer');
+
+    return TriageResult(
+      riskLevel: level,
+      confidence: 0.84,
+      reasons: [
+        'Backend REPAIR-AI triage model reviewed your symptoms.',
+        'DeepSeek screening was unavailable, so the backend triage result was used.',
+        if (needsReferral) 'Referral support may be needed.',
+      ],
+      recommendation: recommendation,
+      urgencyHours: level == RiskLevel.high
+          ? 0
+          : level == RiskLevel.moderate
+              ? 24
+              : 72,
+      needsReferral: needsReferral,
+      aiScreened: true,
+      backendTriageId: data['id'] as int?,
     );
   }
 }

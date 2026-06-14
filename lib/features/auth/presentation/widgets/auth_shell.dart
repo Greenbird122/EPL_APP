@@ -284,9 +284,9 @@ class AuthShell extends StatelessWidget {
                                           fontSize: 12,
                                         ),
                                       ),
-                                      TextButton(
+                                      const TextButton(
                                         onPressed: launchUssdCode,
-                                        child: const Text(kRepairAiUssdCode),
+                                        child: Text(kRepairAiUssdCode),
                                       ),
                                     ],
                                   ),

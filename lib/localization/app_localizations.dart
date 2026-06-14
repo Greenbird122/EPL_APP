@@ -1,8 +1,38 @@
 export 'languages/app_localizations_en.dart';
 export 'languages/app_localizations_sw.dart';
+export 'languages/app_localizations_fr.dart';
+export 'languages/app_localizations_es.dart';
+export 'languages/app_localizations_pt.dart';
+export 'languages/app_localizations_ar.dart';
+export 'languages/app_localizations_so.dart';
+export 'languages/app_localizations_tn.dart';
+export 'languages/app_localizations_xh.dart';
+export 'languages/app_localizations_yo.dart';
+export 'languages/app_localizations_zu.dart';
+export 'languages/app_localizations_ha.dart';
+export 'languages/app_localizations_ig.dart';
+export 'languages/app_localizations_rw.dart';
+export 'languages/app_localizations_lg.dart';
+export 'languages/app_localizations_rn.dart';
+export 'languages/app_localizations_st.dart';
 
 import 'languages/app_localizations_en.dart' as en;
 import 'languages/app_localizations_sw.dart' as sw;
+import 'languages/app_localizations_fr.dart' as fr;
+import 'languages/app_localizations_es.dart' as es;
+import 'languages/app_localizations_pt.dart' as pt;
+import 'languages/app_localizations_ar.dart' as ar;
+import 'languages/app_localizations_so.dart' as so;
+import 'languages/app_localizations_tn.dart' as tn;
+import 'languages/app_localizations_xh.dart' as xh;
+import 'languages/app_localizations_yo.dart' as yo;
+import 'languages/app_localizations_zu.dart' as zu;
+import 'languages/app_localizations_ha.dart' as ha;
+import 'languages/app_localizations_ig.dart' as ig;
+import 'languages/app_localizations_rw.dart' as rw;
+import 'languages/app_localizations_lg.dart' as lg;
+import 'languages/app_localizations_rn.dart' as rn;
+import 'languages/app_localizations_st.dart' as st;
 
 /// Base API for app localizations.
 ///
@@ -23,6 +53,21 @@ abstract class AppLocalizations {
   static const Iterable<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('sw'),
+    Locale('fr'),
+    Locale('es'),
+    Locale('pt'),
+    Locale('ar'),
+    Locale('so'),
+    Locale('tn'),
+    Locale('xh'),
+    Locale('yo'),
+    Locale('zu'),
+    Locale('ha'),
+    Locale('ig'),
+    Locale('rw'),
+    Locale('lg'),
+    Locale('rn'),
+    Locale('st'),
   ];
 
   static AppLocalizations of(BuildContext context) {
@@ -33,6 +78,21 @@ abstract class AppLocalizations {
     return loc ??
         switch (localeFromContext(context)) {
           'sw' => sw.AppLocalizationsSw('sw'),
+          'fr' => fr.AppLocalizationsFR('fr'),
+          'es' => es.AppLocalizationsES('es'),
+          'pt' => pt.AppLocalizationsPT('pt'),
+          'ar' => ar.AppLocalizationsAR('ar'),
+          'so' => so.AppLocalizationsSO('so'),
+          'tn' => tn.AppLocalizationsTN('tn'),
+          'xh' => xh.AppLocalizationsXH('xh'),
+          'yo' => yo.AppLocalizationsYO('yo'),
+          'zu' => zu.AppLocalizationsZU('zu'),
+          'ha' => ha.AppLocalizationsHA('ha'),
+          'ig' => ig.AppLocalizationsIG('ig'),
+          'rw' => rw.AppLocalizationsRW('rw'),
+          'lg' => lg.AppLocalizationsLG('lg'),
+          'rn' => rn.AppLocalizationsRN('rn'),
+          'st' => st.AppLocalizationsST('st'),
           _ => en.AppLocalizationsEn('en'),
         };
   }
@@ -460,6 +520,9 @@ abstract class AppLocalizations {
   String get careSupportSubtitle;
   String get emergency;
   String get transport;
+  String get website;
+  String get phone;
+  String get mobileApp;
   String get findCareTitle;
   String get openFacilityDirections;
   String get transportRequestQueued;
@@ -508,7 +571,6 @@ abstract class AppLocalizations {
   String get showingCurrentLocationFacilities;
   String get mapDataAttribution;
   String get aiScreeningReferralChecked;
-  String get localScreeningReferralGuidance;
   String get findVerifiedCareNow;
   String get viewVerifiedCareOptions;
   String get nearbyMapResults;
@@ -545,12 +607,34 @@ abstract class AppLocalizations {
   String get aiUnavailable;
   String get aiTimedOut;
   String get aiReadinessChecking;
-  String get localSafetyScreening;
-  String get localSafetyFallback;
+  String get aiStagePreparing;
+  String get aiStagePreparingSubtitle;
+  String get aiStagePreparingShort;
+  String get aiStageSending;
+  String get aiStageSendingSubtitle;
+  String get aiStageSendingShort;
+  String get aiStageAnalyzing;
+  String get aiStageAnalyzingSubtitle;
+  String get aiStageAnalyzingShort;
+  String get aiStageReferral;
+  String get aiStageReferralSubtitle;
+  String get aiStageReferralShort;
+  String get aiStageSaving;
+  String get aiStageSavingSubtitle;
+  String get aiStageSavingShort;
+  String get aiUnavailableActionsTitle;
+  String get aiUnavailableActionsSubtitle;
+  String get editSymptoms;
+  String get contactSupport;
+  String get typeInstead;
+  String get retryVoiceUpload;
+  String get voiceRequestingMic;
+  String get voiceRecordingNow;
+  String get voiceStopping;
+  String get voiceUploading;
   String get patientStatedAge;
   String get ageNotProvided;
   String get noAgeGuessingSafety;
-  String get useLocalSafetyScreening;
   String get aiServiceUnavailable;
   String get patientProfileRequiredForAi;
   String get symptomStrengthQuestion;
@@ -569,4 +653,50 @@ abstract class AppLocalizations {
   String get askProviderToUpdateAnc;
   String get ancContextForReferral;
   String get ancContextForRisk;
+
+  // -- Risk result screen labels
+  String get yourAssessment;
+  String get riskCallToActionHigh;
+  String get riskCallToActionModerate;
+  String get riskCallToActionLow;
+  String confidenceLabel(String pct);
+  String get riskUrgentInstructions;
+  String get whatYouReported;
+  String get whatYouShouldDo;
+  String get newCheck;
+  String get findFacility;
+  String get viewCare;
+  String get discussResultWithAi;
+  String get screeningSourceAiAssisted;
+  String get screeningSourceQuickCheck;
+  String get riskSubtitleHigh;
+  String get riskSubtitleModerate;
+  String get riskSubtitleLow;
+  String weeksPregnantWithTrimester(String weeks, String trimester);
+
+  // -- Chat / case list labels
+  String get aiAnalyzingYourCase;
+  String get submitSymptomsForFirstCase;
+
+  /// Shown when backend AI screening is unavailable and we can fall back
+  /// to local guidance/screening.
+  String get localSafetyFallback;
+
+  /// Button label for triggering the local safety screening fallback.
+  String get useLocalSafetyScreening;
+  String get chatWithCareAssistantHint;
+  String get chatSenderYou;
+  String get chatSenderCareAssistant;
+  String get caseRiskHigh;
+  String get caseRiskModerate;
+  String get caseRiskLow;
+  String get caseStatusActive;
+  String get caseStatusAnalyzing;
+  String get caseStatusReferred;
+
+  // -- Referral / action labels
+  String get whatsApp;
+
+  // -- Video splash
+  String get appMaternalHealthPlatform;
 }

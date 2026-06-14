@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/kenya_counties.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/network/api_client.dart';
+import 'package:repair_ai/core/network/backend_heartbeat_provider.dart';
 import 'package:repair_ai/core/network/backend_services.dart';
 import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/features/auth/presentation/widgets/auth_error_banner.dart';
@@ -149,6 +150,8 @@ class _CompleteCareProfileScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isOnline =
+        ref.watch(backendHeartbeatProvider) == BackendHeartbeatState.online;
 
     return Scaffold(
       appBar: RepairAppBar(title: l10n.completeCareProfile),
@@ -164,6 +167,10 @@ class _CompleteCareProfileScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (!isOnline) ...[
+                        const _OfflineBanner(),
+                        const SizedBox(height: 12),
+                      ],
                       if (_errorMessage != null) ...[
                         AuthErrorBanner(
                           message: _errorMessage!,
@@ -232,8 +239,8 @@ class _CompleteCareProfileScreenState
                                 ),
                                 validator: (value) =>
                                     value == null || value.trim().isEmpty
-                                    ? 'Enter sub-county.'
-                                    : null,
+                                        ? 'Enter sub-county.'
+                                        : null,
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -312,6 +319,36 @@ class _CompleteCareProfileScreenState
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
+  }
+}
+
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.warning.withValues(alpha: 0.2)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 18, color: AppTheme.warning),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "You're offline. Changes will sync when connected.",
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.warning),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

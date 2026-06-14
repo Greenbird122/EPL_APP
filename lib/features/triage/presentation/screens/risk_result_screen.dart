@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:repair_ai/core/config/themes.dart';
@@ -10,7 +9,6 @@ import 'package:repair_ai/features/triage/application/triage_controller.dart';
 import 'package:repair_ai/features/triage/domain/triage_result.dart';
 import 'package:repair_ai/features/triage/domain/triage_rules.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
-import 'package:repair_ai/localization/triage_l10n.dart';
 import 'package:repair_ai/core/widgets/loading_error_state.dart';
 import 'package:repair_ai/features/triage/presentation/widgets/explainability_card.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
@@ -48,232 +46,170 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
     final draft = ref.read(symptomReportDraftProvider);
     if (result == null || draft == null) return;
 
+    _persisted = true;
     _savedSymptoms = List<String>.from(draft.symptoms);
     _savedGestationalAge = draft.gestationalAge;
     _savedSeverity = draft.severity;
     _savedDuration = draft.duration;
     _savedNotes = draft.notes;
 
-    ref
-        .read(reportHistoryProvider.notifier)
-        .addReport(
-          SymptomReport(
-            id: DateTime.now().toIso8601String(),
-            date: DateTime.now(),
-            symptoms: draft.symptoms,
-            gestationalAge: draft.gestationalAge,
-            severity: draft.severity,
-            duration: draft.duration,
-            notes: draft.notes,
-            riskLevel: result.riskLevel.storageKey,
-            recommendation: result.recommendation,
-            confidence: result.confidence,
-          ),
-        );
-    ref.read(symptomReportDraftProvider.notifier).state = null;
-    _persisted = true;
-
-    if (result.riskLevel == RiskLevel.high) {
-      HapticFeedback.mediumImpact();
-    }
+    ref.read(reportHistoryProvider.notifier).addReport(SymptomReport(
+          id: DateTime.now().toIso8601String(),
+          date: DateTime.now(),
+          symptoms: _savedSymptoms!,
+          gestationalAge: _savedGestationalAge!,
+          severity: _savedSeverity!,
+          duration: _savedDuration!,
+          notes: _savedNotes ?? '',
+          riskLevel: result.riskLevel.storageKey,
+          recommendation: result.recommendation,
+          confidence: result.confidence,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final result = ref.watch(triageResultProvider);
-    final draft = ref.watch(symptomReportDraftProvider);
-    final ancProfile = ref.watch(ancProfileProvider('current-patient')).value;
+    final draft = ref.read(symptomReportDraftProvider);
+    final ancProfileAsync = ref.watch(ancProfileProvider);
+    final ancProfile = ancProfileAsync.maybeWhen(
+      data: (profile) => profile,
+      orElse: () => null,
+    );
 
     if (result == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.go('/triage/symptom-report');
-      });
       return Scaffold(body: LoadingState(message: l10n.onDeviceAnalysis));
     }
 
     final symptoms = _savedSymptoms ?? draft?.symptoms ?? const <String>[];
     final gestationalAge = _savedGestationalAge ?? draft?.gestationalAge ?? 8.0;
     final severity = _savedSeverity ?? draft?.severity ?? 'moderate';
-    final duration = _savedDuration ?? draft?.duration ?? 'today';
     final notes = _savedNotes ?? draft?.notes ?? '';
     final trimester = TriageRules.trimesterLabel(gestationalAge, l10n);
     final confidencePct = (result.confidence * 100).round();
-
-    final size = MediaQuery.of(context).size;
-    final shortest = size.shortestSide;
-    final horizontalPadding = shortest < 380 ? 12.0 : 16.0;
-    final cardRadius = shortest < 380 ? 20.0 : 24.0;
-    final titleSize = shortest < 380 ? 26.0 : 32.0;
-    final iconSize = shortest < 380 ? 64.0 : 80.0;
-    final riskCardPadding = shortest < 380 ? 20.0 : 32.0;
+    final compact = RepairBreakpoints.isCompactPhone(context);
+    final riskColor = result.riskLevel.color;
 
     return Scaffold(
-      appBar: RepairAppBar(title: l10n.aiRiskAssessment),
+      appBar: RepairAppBar(title: l10n.yourAssessment),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 20),
           child: ResponsivePageShell(
             maxWidth: RepairSizing.formMaxWidth(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 16),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: Card(
-                    key: ValueKey(result.riskLevel),
-                    elevation: 10,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(cardRadius),
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(riskCardPadding),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(cardRadius),
-                        gradient: LinearGradient(
-                          colors: [
-                            result.riskLevel.color.withValues(alpha: 0.12),
-                            Theme.of(context).colorScheme.surface,
-                          ],
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            size: iconSize,
-                            color: result.riskLevel.color,
-                          ),
-                          const SizedBox(height: 12),
-                          RiskLevelChip(level: result.riskLevel),
-                          const SizedBox(height: 8),
-                          _ScreeningSourceChip(result: result, l10n: l10n),
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.riskLabel(result.riskLevel).toUpperCase(),
-                            style: TextStyle(
-                              fontSize: titleSize,
-                              fontWeight: FontWeight.bold,
-                              color: result.riskLevel.color,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.riskLevel,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.modelConfidenceLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: result.confidence,
-                    minHeight: 10,
-                    backgroundColor: Colors.grey.shade200,
-                    color: AppTheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$confidencePct%',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.basedOnSymptoms,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...symptoms.map(
-                          (s) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Text(
-                              '• ${SymptomCatalog.label(l10n, s)}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${gestationalAge.toStringAsFixed(1)} ${l10n.weeksPregnantLabel} — $trimester',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${_labelFor(severity)} • ${_labelFor(duration)}',
-                          style: TextStyle(
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (notes.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            notes,
-                            style: const TextStyle(fontSize: 14, height: 1.4),
-                          ),
-                        ],
+
+                // Risk banner — dramatic full-width
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(compact ? 22 : 30),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        riskColor.withValues(alpha: 0.18),
+                        riskColor.withValues(alpha: 0.06),
                       ],
                     ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: riskColor.withValues(alpha: 0.25),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: riskColor.withValues(alpha: 0.15),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        result.riskLevel == RiskLevel.high
+                            ? Icons.warning_rounded
+                            : result.riskLevel == RiskLevel.moderate
+                                ? Icons.info_outline_rounded
+                                : Icons.check_circle_outline_rounded,
+                        size: compact ? 56 : 72,
+                        color: riskColor,
+                      ),
+                      const SizedBox(height: 12),
+                      RiskLevelChip(level: result.riskLevel),
+                      const SizedBox(height: 6),
+                      _ScreeningSourceChip(result: result, l10n: l10n),
+                      const SizedBox(height: 12),
+                      Text(
+                        result.riskLevel == RiskLevel.high
+                            ? l10n.riskCallToActionHigh
+                            : result.riskLevel == RiskLevel.moderate
+                                ? l10n.riskCallToActionModerate
+                                : l10n.riskCallToActionLow,
+                        style: TextStyle(
+                          fontSize: RepairSizing.textScale(context, 28),
+                          fontWeight: FontWeight.w900,
+                          color: riskColor,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _riskSubtitle(result.riskLevel, l10n),
+                        style: TextStyle(
+                          fontSize: RepairSizing.textScale(context, 15),
+                          color: riskColor.withValues(alpha: 0.75),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: riskColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          l10n.confidenceLabel(confidencePct.toString()),
+                          style: TextStyle(
+                            color: riskColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: RepairSizing.textScale(context, 14),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ExplainabilityCard(
-                  title: l10n.whyThisResult,
-                  reasons: result.reasons,
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
+
+                // Urgency banner for high risk
+                if (result.riskLevel == RiskLevel.high) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: AppTheme.error.withValues(alpha: 0.3)),
+                    ),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          result.aiScreened
-                              ? Icons.psychology_alt_outlined
-                              : Icons.health_and_safety_outlined,
-                          color: AppTheme.primary,
-                        ),
+                        const Icon(Icons.priority_high_rounded,
+                            color: AppTheme.error, size: 28),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            result.aiScreened
-                                ? l10n.aiScreeningReferralChecked
-                                : l10n.localScreeningReferralGuidance,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
+                            l10n.riskUrgentInstructions,
+                            style: TextStyle(
+                              color: AppTheme.error,
+                              fontWeight: FontWeight.w800,
+                              fontSize: RepairSizing.textScale(context, 14),
                               height: 1.35,
                             ),
                           ),
@@ -281,7 +217,122 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: RepairSizing.buttonHeight(context),
+                    child: ElevatedButton.icon(
+                      onPressed: launchEmergencyCall,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.error,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18)),
+                      ),
+                      icon: const Icon(Icons.phone),
+                      label: Text(l10n.callEmergency,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const FollowUpPrompt(compact: true),
+                ],
+
+                const SizedBox(height: 20),
+
+                // What you reported
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceTinted,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                        color: AppTheme.primary.withValues(alpha: 0.1)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.whatYouReported,
+                          style: TextStyle(
+                            fontSize: RepairSizing.textScale(context, 17),
+                            fontWeight: FontWeight.w800,
+                          )),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: symptoms
+                            .map((s) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primary
+                                        .withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    SymptomCatalog.label(l10n, s),
+                                    style: TextStyle(
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize:
+                                          RepairSizing.textScale(context, 13),
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        l10n.weeksPregnantWithTrimester(
+                          gestationalAge.toStringAsFixed(1),
+                          trimester,
+                        ),
+                        style: TextStyle(
+                          color: AppTheme.primary.withValues(alpha: 0.65),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+
+                const SizedBox(height: 16),
+
+                // Why this result
+                ExplainabilityCard(
+                  title: l10n.whyThisResult,
+                  reasons: result.reasons,
+                ),
+
+                const SizedBox(height: 16),
+
+                // AI source note
+                if (result.aiScreened)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.1)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.psychology_alt_outlined,
+                            color: AppTheme.primary, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            l10n.aiScreeningReferralChecked,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600, height: 1.35),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 if ((ancProfile?.contextFlags ?? const []).isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _AncContextCard(
@@ -289,108 +340,92 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
                     flags: ancProfile!.contextFlags,
                   ),
                 ],
+
                 const SizedBox(height: 16),
-                Card(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.recommendation,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+
+                // Recommendation
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppTheme.primary.withValues(alpha: 0.1),
+                        AppTheme.primary.withValues(alpha: 0.04),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                        color: AppTheme.primary.withValues(alpha: 0.15)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.whatYouShouldDo,
+                          style: TextStyle(
+                            fontSize: RepairSizing.textScale(context, 17),
+                            fontWeight: FontWeight.w800,
                             color: AppTheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          result.recommendation,
-                          style: const TextStyle(fontSize: 16, height: 1.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (result.riskLevel == RiskLevel.high) ...[
-                  const SizedBox(height: 12),
-                  Card(
-                    color: AppTheme.error.withValues(alpha: 0.12),
-                    child: const Padding(
-                      padding: EdgeInsets.all(14),
-                      child: Text(
-                        'Urgent: do not wait for a digital referral if symptoms are severe. Go to care now or call emergency support.',
+                          )),
+                      const SizedBox(height: 8),
+                      Text(
+                        result.recommendation,
                         style: TextStyle(
-                          color: AppTheme.error,
-                          fontWeight: FontWeight.w700,
-                          height: 1.35,
+                          fontSize: RepairSizing.textScale(context, 15),
+                          height: 1.5,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: launchEmergencyCall,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.error,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Bottom actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: RepairOutlinedButton(
+                        label: l10n.newCheck,
+                        icon: Icons.refresh,
+                        onPressed: () {
+                          ref.read(triageResultProvider.notifier).state = null;
+                          context.push('/triage/symptom-report');
+                        },
                       ),
-                      icon: const Icon(Icons.phone),
-                      label: Text(l10n.callEmergency),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: RepairPrimaryButton(
+                        label: result.needsReferral
+                            ? l10n.findFacility
+                            : l10n.viewCare,
+                        icon: result.needsReferral
+                            ? Icons.local_hospital
+                            : Icons.favorite_border,
+                        onPressed: () {
+                          context.push(
+                              result.needsReferral ? '/referral' : '/care');
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/care'),
+                    icon: const Icon(Icons.chat_outlined),
+                    label: Text(l10n.discussResultWithAi),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primary,
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18)),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const FollowUpPrompt(compact: true),
-                ],
-                const SizedBox(height: 24),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final stackActions =
-                        RepairBreakpoints.isCompactPhone(context) ||
-                        constraints.maxWidth < 380;
-                    final backButton = RepairOutlinedButton(
-                      label: l10n.triageBack,
-                      onPressed: () => context.go('/triage/symptom-report'),
-                    );
-                    final referralButton = RepairPrimaryButton(
-                      label: result.needsReferral
-                          ? l10n.findVerifiedCareNow
-                          : l10n.viewVerifiedCareOptions,
-                      icon: Icons.local_hospital,
-                      onPressed: () => context.push('/referral'),
-                    );
-
-                    if (stackActions) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          referralButton,
-                          const SizedBox(height: 10),
-                          backButton,
-                        ],
-                      );
-                    }
-
-                    return Row(
-                      children: [
-                        Expanded(child: backButton),
-                        const SizedBox(width: 12),
-                        Expanded(child: referralButton),
-                      ],
-                    );
-                  },
                 ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => context.push('/history'),
-                  child: Text(l10n.viewHistory),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -399,113 +434,78 @@ class _RiskResultScreenState extends ConsumerState<RiskResultScreen> {
     );
   }
 
-  String _labelFor(String value) {
-    switch (value) {
-      case 'mild':
-        return 'Mild';
-      case 'moderate':
-        return 'Moderate';
-      case 'severe':
-        return 'Severe';
-      case 'today':
-        return 'Started today';
-      case 'two_days':
-        return '1-2 days';
-      case 'three_plus':
-        return '3+ days';
-      default:
-        return value;
+  String _riskSubtitle(RiskLevel level, AppLocalizations l10n) {
+    switch (level) {
+      case RiskLevel.high:
+        return l10n.riskSubtitleHigh;
+      case RiskLevel.moderate:
+        return l10n.riskSubtitleModerate;
+      case RiskLevel.low:
+        return l10n.riskSubtitleLow;
     }
-  }
-}
-
-class _AncContextCard extends StatelessWidget {
-  const _AncContextCard({required this.title, required this.flags});
-
-  final String title;
-  final List<dynamic> flags;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: AppTheme.warning.withValues(alpha: 0.10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.assignment_turned_in_outlined,
-                  color: AppTheme.warning,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            for (final flag in flags)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  '• ${flag.label}: ${flag.detail}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
 class _ScreeningSourceChip extends StatelessWidget {
   const _ScreeningSourceChip({required this.result, required this.l10n});
-
   final TriageResult result;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final color = result.aiScreened ? AppTheme.primary : AppTheme.warning;
+    final label = result.aiScreened
+        ? l10n.screeningSourceAiAssisted
+        : l10n.screeningSourceQuickCheck;
+    final icon = result.aiScreened ? Icons.auto_awesome : Icons.speed;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.34)),
+        color: AppTheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            result.aiScreened
-                ? Icons.psychology_alt_outlined
-                : Icons.health_and_safety_outlined,
-            size: 16,
-            color: color,
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              result.aiScreened
-                  ? l10n.aiAssistedScreening
-                  : l10n.localSafetyScreening,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-              ),
-            ),
-          ),
+          Icon(icon, size: 14, color: AppTheme.primary),
+          const SizedBox(width: 5),
+          Text(label,
+              style: const TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+              )),
+        ],
+      ),
+    );
+  }
+}
+
+class _AncContextCard extends StatelessWidget {
+  const _AncContextCard({required this.title, required this.flags});
+  final String title;
+  final List<dynamic> flags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.warning.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.warning.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800, color: AppTheme.warning)),
+          const SizedBox(height: 8),
+          ...flags.take(3).map((f) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text('• $f',
+                    style: const TextStyle(fontSize: 13, height: 1.35)),
+              )),
         ],
       ),
     );

@@ -31,6 +31,7 @@ class ApiClient {
   final http.Client _client;
   final SecureTokenStore _tokenStore;
   final String _baseUrl;
+  Future<bool>? _refreshFuture;
 
   Uri _uri(String path, [Map<String, dynamic>? query]) {
     final normalPath = path.startsWith('/') ? path : '/$path';
@@ -146,7 +147,18 @@ class ApiClient {
       throw ApiException('Could not reach care services. $error');
     }
 
-    final body = response.body.isEmpty ? null : jsonDecode(response.body);
+    final dynamic body;
+    if (response.body.isEmpty) {
+      body = null;
+    } else {
+      try {
+        body = jsonDecode(response.body);
+      } on FormatException {
+        throw const ApiException(
+          'Received invalid response from care services.',
+        );
+      }
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body;
@@ -164,6 +176,15 @@ class ApiClient {
     required Future<http.Response> Function(Map<String, String> headers)
         request,
   }) async {
+    return _sendWithRefreshInternal(authenticated, timeout, request, 0);
+  }
+
+  Future<dynamic> _sendWithRefreshInternal(
+    bool authenticated,
+    Duration? timeout,
+    Future<http.Response> Function(Map<String, String> headers) request,
+    int retryCount,
+  ) async {
     try {
       return await _send(
         () async => request(
@@ -174,17 +195,31 @@ class ApiClient {
         timeout: timeout,
       );
     } on ApiException catch (error) {
-      if (!authenticated || error.statusCode != 401) rethrow;
+      if (!authenticated || error.statusCode != 401 || retryCount >= 1) {
+        rethrow;
+      }
       final refreshed = await _refreshAccessToken();
       if (!refreshed) rethrow;
-      return _send(
-        () async => request(await _authorizedHeaders()),
-        timeout: timeout,
+      return _sendWithRefreshInternal(
+        authenticated,
+        timeout,
+        request,
+        retryCount + 1,
       );
     }
   }
 
   Future<bool> _refreshAccessToken() async {
+    if (_refreshFuture != null) return _refreshFuture!;
+    _refreshFuture = _performRefresh();
+    try {
+      return await _refreshFuture!;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<bool> _performRefresh() async {
     final refreshToken = await _tokenStore.readRefreshToken();
     if (refreshToken == null) return false;
     try {
@@ -235,9 +270,15 @@ class ApiClient {
   String _statusMessage(int statusCode) {
     return switch (statusCode) {
       400 => 'Some details need checking. Please review and try again.',
-      401 => 'Your username or password was not accepted.',
+      401 => 'Your phone number or password was not accepted.',
       403 => 'You do not have permission to access this feature.',
       404 => 'This action is not available yet.',
+      502 =>
+        'AI care services could not complete that request. Please try again shortly.',
+      503 =>
+        'This care service is not ready right now. Please try again shortly.',
+      504 =>
+        'AI care services are taking longer than expected. Please try again.',
       >= 500 =>
         'Care services are having trouble right now. Please try again shortly.',
       _ => 'This action could not be completed. Please try again.',
@@ -246,7 +287,7 @@ class ApiClient {
 
   String _friendlyFieldName(String key) {
     return switch (key) {
-      'username' => 'Username / care ID',
+      'username' => 'Phone number or care ID',
       'email' => 'Email',
       'phone' => 'Phone number',
       'password' => 'Password',

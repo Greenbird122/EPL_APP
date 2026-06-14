@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/utils/app_error_handler.dart';
 import 'package:repair_ai/core/utils/launch_helpers.dart';
+import 'package:repair_ai/core/utils/responsive.dart';
 import 'package:repair_ai/localization/app_localizations.dart';
 import 'package:repair_ai/shared/widgets/repair_app_bar.dart';
 
@@ -20,6 +21,7 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final compact = RepairBreakpoints.isCompactPhone(context);
 
     final feelings = [
       {
@@ -64,7 +66,7 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: SizedBox(
-                height: 132,
+                height: compact ? 120 : 150,
                 width: double.infinity,
                 child: Image.asset(
                   'assets/illustrations/mental_health.jpg',
@@ -133,39 +135,57 @@ class _MentalHealthScreenState extends ConsumerState<MentalHealthScreen> {
 
                 return GestureDetector(
                   onTap: () => setState(() => selectedFeelingKey = key),
-                  child: Card(
-                    elevation: isSelected ? 8 : 2,
-                    shape: RoundedRectangleBorder(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
+                      color: isSelected
+                          ? (feeling['color'] as Color).withValues(alpha: 0.12)
+                          : AppTheme.surfaceTinted,
+                      border: Border.all(
                         color: isSelected
                             ? feeling['color'] as Color
-                            : Colors.transparent,
-                        width: 3,
+                            : AppTheme.primary.withValues(alpha: 0.1),
+                        width: isSelected ? 2 : 1,
                       ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: (feeling['color'] as Color)
+                                    .withValues(alpha: 0.18),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          feeling['emoji'] as String,
-                          style: const TextStyle(fontSize: 42),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          feeling['label'] as String,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected
-                                ? feeling['color'] as Color
-                                : null,
-                            fontSize: 12,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            feeling['emoji'] as String,
+                            style: TextStyle(
+                              fontSize: isSelected ? 46 : 38,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            feeling['label'] as String,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? feeling['color'] as Color
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                              fontSize: RepairSizing.textScale(context, 12),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

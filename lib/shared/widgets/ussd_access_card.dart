@@ -60,12 +60,12 @@ class UssdAccessCard extends StatelessWidget {
                 children: [
                   Text(
                     l10n.useUssdTitle,
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 3),
-                  Text(
+                  const Text(
                     kRepairAiUssdCode,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.primary,
                       fontWeight: FontWeight.w900,
                       fontSize: 18,

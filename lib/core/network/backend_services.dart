@@ -48,6 +48,9 @@ final backendStatusApiProvider = Provider<BackendStatusApi>(
 final ancProfileApiProvider = Provider<AncProfileApi>(
   (ref) => AncProfileApi(ref.watch(apiClientProvider)),
 );
+final paymentsApiProvider = Provider<PaymentsApi>(
+  (ref) => PaymentsApi(ref.watch(apiClientProvider)),
+);
 
 enum BackendConnectionState { unknown, online, offline }
 
@@ -117,10 +120,20 @@ class AuthApi {
     ) as Map<String, dynamic>;
   }
 
-  Future<void> logout() => _tokenStore.clear();
+  Future<void> logout() async {
+    try {
+      await _client.post('/api/auth/logout/', authenticated: true);
+    } catch (_) {}
+    await _tokenStore.clear();
+  }
 
   Future<Map<String, dynamic>> profile() async {
     return await _client.get('/api/auth/profile/') as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) async {
+    return await _client.patch('/api/auth/profile/', body: body)
+        as Map<String, dynamic>;
   }
 }
 
@@ -147,6 +160,57 @@ class PatientApi {
   }) async {
     return _asList(await _client.get('/api/patients/', query: query));
   }
+
+  Future<Map<String, dynamic>> getDashboardStats() async {
+    return await _client.get('/api/patients/dashboard-stats/')
+        as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getVisitCaseFile(int visitId) async {
+    return await _client.get('/api/patients/visits/$visitId/case-file/')
+        as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> generateSummary(int visitId) async {
+    return await _client.post(
+      '/api/patients/generate-summary/',
+      body: {'visit_id': visitId},
+      timeout: const Duration(seconds: 45),
+    ) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getChatMessages(int membershipId) async {
+    return await _client.get('/api/patients/chat/$membershipId/')
+        as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> sendChatMessage(
+      int membershipId, String text) async {
+    return await _client.post(
+      '/api/patients/chat/$membershipId/send/',
+      body: {'text': text},
+    ) as Map<String, dynamic>;
+  }
+
+  /// Request a REPAIR-AI Patient Digital ID (4-digit PIN badge).
+  /// Mirrors [patientService.requestPatientId] in the web app.
+  /// Returns the created/pending patient identifier record.
+  Future<Map<String, dynamic>> requestPatientId({
+    required String phone,
+    required String password,
+    required String pin,
+    required String confirmPin,
+  }) async {
+    return await _client.post(
+      '/api/patients/request-patient-id/',
+      body: {
+        'phone': phone,
+        'password': password,
+        'pin': pin,
+        'confirm_pin': confirmPin,
+      },
+    ) as Map<String, dynamic>;
+  }
 }
 
 class AncProfileApi {
@@ -154,18 +218,33 @@ class AncProfileApi {
 
   final ApiClient _client;
 
+  /// Fetch ANC profile fields from the Patient record.
   Future<Map<String, dynamic>> fetch(int patientId) async {
-    return await _client.get('/api/patients/$patientId/anc-profile/')
+    return await _client.get('/api/patients/$patientId/')
         as Map<String, dynamic>;
   }
 
+  /// Update ANC profile fields — only sends fields the backend Patient model has.
   Future<Map<String, dynamic>> update(
     int patientId,
     Map<String, dynamic> body,
   ) async {
+    final backendFields = <String, dynamic>{};
+    if (body['blood_group'] != null) {
+      backendFields['blood_group'] = body['blood_group'];
+    }
+    if (body['chronic_conditions'] != null) {
+      backendFields['chronic_conditions'] = body['chronic_conditions'];
+    }
+    if (body['allergies'] != null) {
+      backendFields['allergies'] = body['allergies'];
+    }
+    if (body['current_medications'] != null) {
+      backendFields['current_medications'] = body['current_medications'];
+    }
     return await _client.patch(
-      '/api/patients/$patientId/anc-profile/',
-      body: body,
+      '/api/patients/$patientId/',
+      body: backendFields,
     ) as Map<String, dynamic>;
   }
 }
@@ -186,6 +265,25 @@ class VisitApi {
 
   Future<Map<String, dynamic>> createVisit(Map<String, dynamic> body) async {
     return await _client.post('/api/patients/visits/', body: body)
+        as Map<String, dynamic>;
+  }
+
+  /// Send a message to an active visit — the AI auto-replies.
+  Future<Map<String, dynamic>> addMessage(int visitId, String text) async {
+    return await _client.post(
+      '/api/patients/visits/$visitId/add-message/',
+      body: {'text': text},
+    ) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> closeCase(int visitId) async {
+    return await _client.post(
+      '/api/patients/visits/$visitId/close-case/',
+    ) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getVisit(int visitId) async {
+    return await _client.get('/api/patients/visits/$visitId/')
         as Map<String, dynamic>;
   }
 }
@@ -266,6 +364,21 @@ class ReferralApi {
     return await _client.post(
       '/api/referrals/generate/',
       body: {'triage_id': triageId},
+    ) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> recommendFacilities({
+    required int patientId,
+    required int visitId,
+    required String riskLevel,
+  }) async {
+    return await _client.post(
+      '/api/referrals/recommend/',
+      body: {
+        'patient_id': patientId,
+        'visit_id': visitId,
+        'risk_level': riskLevel,
+      },
     ) as Map<String, dynamic>;
   }
 }
@@ -377,6 +490,42 @@ class BackendStatusApi {
   }
 }
 
+class NotificationApi {
+  const NotificationApi(this._client);
+
+  final ApiClient _client;
+
+  Future<List<Map<String, dynamic>>> list({
+    String? channel,
+    String? status,
+    int? patientId,
+  }) async {
+    final query = <String, dynamic>{
+      if (channel != null) 'channel': channel,
+      if (status != null) 'status': status,
+      if (patientId != null) 'related_patient': patientId,
+    };
+    return _asList(await _client.get('/api/notifications/', query: query));
+  }
+
+  Future<Map<String, dynamic>> send({
+    required String phone,
+    required String message,
+    String channel = 'sms',
+    int? patientId,
+  }) async {
+    return await _client.post(
+      '/api/notifications/send/',
+      body: {
+        'phone': phone,
+        'message': message,
+        'channel': channel,
+        if (patientId != null) 'patient_id': patientId,
+      },
+    ) as Map<String, dynamic>;
+  }
+}
+
 List<Map<String, dynamic>> _asList(dynamic data) {
   final raw = data is Map<String, dynamic> && data['results'] is List
       ? data['results'] as List
@@ -387,4 +536,40 @@ List<Map<String, dynamic>> _asList(dynamic data) {
       .whereType<Map>()
       .map((item) => Map<String, dynamic>.from(item))
       .toList();
+}
+
+class PaymentsApi {
+  const PaymentsApi(this._client);
+
+  final ApiClient _client;
+
+  /// Get current patient's card. Returns { card: Map?, has_pid: bool }
+  Future<Map<String, dynamic>> getCard() async {
+    return await _client.get('/api/payments/card/') as Map<String, dynamic>;
+  }
+
+  /// Top up card balance
+  Future<Map<String, dynamic>> topUp({
+    required double amount,
+    required String reference,
+    String? paystackReference,
+  }) async {
+    return await _client.post(
+      '/api/payments/card/topup/',
+      body: {
+        'amount': amount,
+        'reference': reference,
+        if (paystackReference != null) 'paystack_reference': paystackReference,
+      },
+    ) as Map<String, dynamic>;
+  }
+
+  /// Get recent transactions
+  Future<List<Map<String, dynamic>>> getTransactions() async {
+    final res = await _client.get('/api/payments/card/transactions/');
+    if (res is List) {
+      return res.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    }
+    return const [];
+  }
 }

@@ -16,6 +16,7 @@ class BackendConnectionListener extends ConsumerStatefulWidget {
 class _BackendConnectionListenerState
     extends ConsumerState<BackendConnectionListener> {
   bool _hasShownOffline = false;
+  bool _initialCheckDone = false;
 
   @override
   Widget build(BuildContext context) {
@@ -23,14 +24,22 @@ class _BackendConnectionListenerState
       previous,
       next,
     ) {
-      if (next == BackendHeartbeatState.offline && !_hasShownOffline) {
+      // Skip the initial "checking" state — don't show anything until first result
+      if (!_initialCheckDone && next == BackendHeartbeatState.checking) return;
+      _initialCheckDone = true;
+
+      // Only show offline message when genuinely offline, not during checking
+      if (next == BackendHeartbeatState.offline &&
+          previous != BackendHeartbeatState.checking &&
+          !_hasShownOffline) {
         _hasShownOffline = true;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Backend is offline. Saved/local data may still be shown.',
+              'Having trouble connecting. Your saved health info is still available.',
             ),
             behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 4),
           ),
         );
       }
@@ -88,20 +97,20 @@ class BackendConnectionBar extends ConsumerWidget {
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 200),
           opacity: visible ? 1 : 0,
-          child: Material(
+          child: const Material(
             color: AppTheme.success,
             elevation: 4,
             child: SafeArea(
               top: false,
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 7,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.cloud_done_outlined,
                       color: Colors.white,
@@ -110,7 +119,7 @@ class BackendConnectionBar extends ConsumerWidget {
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'Back online. Care data is syncing.',
+                        'Connected. Your health info is up to date.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,

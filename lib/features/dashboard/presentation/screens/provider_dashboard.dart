@@ -27,9 +27,8 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final filtered = _filter == 'all'
         ? cases
         : cases.where((item) => item.risk.name == _filter).toList();
-    final highCount = cases
-        .where((item) => item.risk == ProviderCaseRisk.high)
-        .length;
+    final highCount =
+        cases.where((item) => item.risk == ProviderCaseRisk.high).length;
     final pendingCount = cases
         .where(
           (item) =>
@@ -43,10 +42,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.chpDashboard),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(58),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(58),
             child: _ChpSectionTabs(
-              tabs: const [
+              tabs: [
                 Tab(
                   child: _ChpTabLabel(
                     icon: Icons.assignment_ind_outlined,

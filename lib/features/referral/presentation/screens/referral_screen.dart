@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:repair_ai/core/config/backend_config.dart';
 import 'package:repair_ai/core/config/themes.dart';
 import 'package:repair_ai/core/network/api_client.dart';
 import 'package:repair_ai/core/network/backend_services.dart';
@@ -82,10 +80,13 @@ class ReferralScreen extends ConsumerWidget {
 
   ReferralFacility? _selectedFacility(
     List<ReferralFacility> facilities,
-    int index,
+    int facilityId,
   ) {
     if (facilities.isEmpty) return null;
-    return facilities[index.clamp(0, facilities.length - 1)];
+    return facilities.cast<ReferralFacility?>().firstWhere(
+          (f) => f?.id == facilityId,
+          orElse: () => facilities.first,
+        );
   }
 }
 
@@ -118,16 +119,25 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
         widget.facilitiesState?.facilities ?? const <ReferralFacility>[];
     final mapFacilities =
         widget.facilitiesState?.mapFacilities ?? const <ReferralFacility>[];
-    final visibleMapFacilities = _showAllMapResults
-        ? mapFacilities
-        : mapFacilities.take(3).toList();
+    final visibleMapFacilities =
+        _showAllMapResults ? mapFacilities : mapFacilities.take(3).toList();
     final isLoading = widget.facilitiesState == null;
-    final ancProfile = ref.watch(ancProfileProvider('current-patient')).value;
+    // Use authenticated patient's ANC profile with null safety
+    final ancProfileAsync = ref.watch(ancProfileProvider);
+    final ancProfile = ancProfileAsync.maybeWhen(
+      data: (profile) => profile,
+      orElse: () => null,
+    );
     final ancFlags = ancProfile?.contextFlags ?? const [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (isLoading)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
         if (widget.isUrgent)
           _UrgentReferralBanner(
             text: l10n.goNowUrgency,
@@ -176,9 +186,10 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
         if (isLoading)
           const _MapLoadingCard()
         else
-          _ReferralMapCard(
-            state: widget.facilitiesState!,
+          _FacilityListCard(
+            facilities: [...facilities, ...mapFacilities],
             selectedFacility: widget.selectedFacility,
+            patientLocation: widget.facilitiesState?.patientLocation,
           ),
         const SizedBox(height: 18),
         Text(
@@ -194,19 +205,19 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
           _EmptyFacilitiesCard(message: l10n.noVerifiedNearbyFacilities)
         else
           ...facilities.asMap().entries.map(
-            (entry) => _FacilityCard(
-              facility: entry.value,
-              selected: entry.value.id == widget.selectedFacility?.id,
-              recommended: entry.key == 0,
-              onTap: () => ref
-                  .read(referralStateProvider.notifier)
-                  .selectFacility(entry.key),
-              onDirections: () => _openDirections(
-                entry.value,
-                widget.facilitiesState?.patientLocation,
+                (entry) => _FacilityCard(
+                  facility: entry.value,
+                  selected: entry.value.id == widget.selectedFacility?.id,
+                  recommended: entry.key == 0,
+                  onTap: () => ref
+                      .read(referralStateProvider.notifier)
+                      .selectFacility(entry.value.id),
+                  onDirections: () => _openDirections(
+                    entry.value,
+                    widget.facilitiesState?.patientLocation,
+                  ),
+                ),
               ),
-            ),
-          ),
         if (!isLoading && mapFacilities.isNotEmpty) ...[
           const SizedBox(height: 18),
           Text(
@@ -384,105 +395,135 @@ class _ReferralBodyState extends ConsumerState<_ReferralBody> {
   }
 }
 
-class _ReferralMapCard extends StatelessWidget {
-  const _ReferralMapCard({required this.state, required this.selectedFacility});
+/// A compact facility list replacing the map view for stability.
+class _FacilityListCard extends StatelessWidget {
+  const _FacilityListCard({
+    required this.facilities,
+    required this.selectedFacility,
+    this.patientLocation,
+  });
 
-  final ReferralFacilitiesState state;
+  final List<ReferralFacility> facilities;
   final ReferralFacility? selectedFacility;
+  final LatLng? patientLocation;
 
   @override
   Widget build(BuildContext context) {
-    final points = <LatLng>[
-      if (state.patientLocation != null) state.patientLocation!,
-      ...state.facilities.map((f) => f.point).whereType<LatLng>(),
-      ...state.mapFacilities.map((f) => f.point).whereType<LatLng>(),
-    ];
-    final center =
-        selectedFacility?.point ??
-        state.patientLocation ??
-        (points.isNotEmpty ? points.first : const LatLng(0.5635, 34.5606));
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final mapSize = constraints.maxWidth.clamp(280.0, 520.0);
-        return ClipRRect(
+    if (facilities.isEmpty) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppTheme.primary.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: mapSize,
-            child: Stack(
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.08)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.local_hospital_outlined,
+                  size: 36, color: AppTheme.primary.withValues(alpha: 0.3)),
+              const SizedBox(height: 8),
+              Text('No nearby facilities found',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.primary.withValues(alpha: 0.5))),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final sorted = List<ReferralFacility>.from(facilities)
+      ..sort((a, b) => (a.distanceKm ?? double.infinity)
+          .compareTo(b.distanceKm ?? double.infinity));
+
+    return Container(
+      height: 260,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.primary.withValues(alpha: 0.02),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border(
+                  bottom: BorderSide(
+                      color: AppTheme.primary.withValues(alpha: 0.08))),
+            ),
+            child: Row(
               children: [
-                FlutterMap(
-                  options: MapOptions(
-                    initialCenter: center,
-                    initialZoom: state.hasGps ? 13 : 9,
-                    maxZoom: 18,
-                    minZoom: 5,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: BackendConfig.mapTileUrl,
-                      userAgentPackageName: 'com.repair_ai.app',
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        if (state.patientLocation != null)
-                          Marker(
-                            point: state.patientLocation!,
-                            width: 44,
-                            height: 44,
-                            child: const _MapPin(
-                              icon: Icons.person_pin_circle,
-                              color: AppTheme.success,
-                            ),
-                          ),
-                        ...state.facilities
-                            .where((facility) => facility.point != null)
-                            .map(
-                              (facility) => Marker(
-                                point: facility.point!,
-                                width: 44,
-                                height: 44,
-                                child: _MapPin(
-                                  icon: facility.id == selectedFacility?.id
-                                      ? Icons.local_hospital
-                                      : Icons.local_hospital_outlined,
-                                  color: facility.id == selectedFacility?.id
-                                      ? AppTheme.primary
-                                      : AppTheme.warning,
-                                ),
-                              ),
-                            ),
-                        ...state.mapFacilities
-                            .where((facility) => facility.point != null)
-                            .map(
-                              (facility) => Marker(
-                                point: facility.point!,
-                                width: 32,
-                                height: 32,
-                                child: const _MapPin(
-                                  icon: Icons.add_location_alt_outlined,
-                                  color: AppTheme.success,
-                                  compact: true,
-                                ),
-                              ),
-                            ),
-                      ],
-                    ),
-                  ],
-                ),
-                Positioned(
-                  left: 10,
-                  right: 10,
-                  bottom: 10,
-                  child: _MapAttribution(
-                    text: AppLocalizations.of(context).mapDataAttribution,
-                  ),
-                ),
+                const Icon(Icons.local_hospital_outlined,
+                    size: 18, color: AppTheme.primary),
+                const SizedBox(width: 8),
+                Text('Nearby Facilities (${sorted.length})',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700)),
               ],
             ),
           ),
-        );
-      },
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              itemCount: sorted.length.clamp(0, 5),
+              separatorBuilder: (_, __) => Divider(
+                  height: 1, color: AppTheme.primary.withValues(alpha: 0.05)),
+              itemBuilder: (context, index) {
+                final f = sorted[index];
+                final isSelected = f.id == selectedFacility?.id;
+                return ListTile(
+                  leading: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: isSelected
+                        ? AppTheme.primary.withValues(alpha: 0.12)
+                        : AppTheme.success.withValues(alpha: 0.1),
+                    child: Icon(
+                      isSelected
+                          ? Icons.local_hospital
+                          : Icons.local_hospital_outlined,
+                      size: 18,
+                      color: isSelected ? AppTheme.primary : AppTheme.success,
+                    ),
+                  ),
+                  title: Text(f.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w600)),
+                  subtitle: Row(children: [
+                    if (f.distanceKm != null)
+                      Text('${f.distanceKm!.toStringAsFixed(1)} km',
+                          style: const TextStyle(fontSize: 11)),
+                    if (f.distanceKm != null && f.level.isNotEmpty)
+                      const Text(' • ', style: TextStyle(fontSize: 11)),
+                    if (f.level.isNotEmpty)
+                      Text(f.level, style: const TextStyle(fontSize: 11)),
+                  ]),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    if (f.hasUltrasound)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 4),
+                        child: Icon(Icons.pregnant_woman,
+                            size: 14, color: AppTheme.accent),
+                      ),
+                    if (f.hasBloodBank)
+                      const Icon(Icons.bloodtype,
+                          size: 14, color: AppTheme.error),
+                  ]),
+                  dense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -580,8 +621,7 @@ class _MapPin extends StatelessWidget {
   const _MapPin({
     required this.icon,
     required this.color,
-    this.compact = false,
-  });
+  }) : compact = false;
 
   final IconData icon;
   final Color color;
@@ -755,9 +795,17 @@ class _FacilityCard extends StatelessWidget {
     final borderColor = selected ? AppTheme.primary : Colors.transparent;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
+      color: selected ? AppTheme.primary.withValues(alpha: 0.06) : null,
+      elevation: selected ? 3 : 1,
+      shadowColor: selected ? AppTheme.primary.withValues(alpha: 0.18) : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: borderColor, width: selected ? 2 : 1),
+        side: BorderSide(
+          color: selected
+              ? AppTheme.primary
+              : AppTheme.primary.withValues(alpha: 0.1),
+          width: selected ? 2 : 1,
+        ),
       ),
       child: InkWell(
         onTap: onTap,
@@ -894,9 +942,9 @@ class _MapFacilityCard extends StatelessWidget {
                 onPressed: facility.point == null
                     ? null
                     : () => launchFacilityDirections(
-                        latitude: facility.point!.latitude,
-                        longitude: facility.point!.longitude,
-                      ),
+                          latitude: facility.point!.latitude,
+                          longitude: facility.point!.longitude,
+                        ),
                 icon: const Icon(Icons.directions),
                 label: Text(l10n.openFacilityDirections),
               ),
@@ -972,13 +1020,13 @@ class _ActionGrid extends StatelessWidget {
               selectedFacility?.point == null
                   ? null
                   : () => launchFacilityDirections(
-                      latitude: selectedFacility!.point!.latitude,
-                      longitude: selectedFacility!.point!.longitude,
-                      fromLatitude: patientLocation?.latitude,
-                      fromLongitude: patientLocation?.longitude,
-                    ),
+                        latitude: selectedFacility!.point!.latitude,
+                        longitude: selectedFacility!.point!.longitude,
+                        fromLatitude: patientLocation?.latitude,
+                        fromLongitude: patientLocation?.longitude,
+                      ),
             ),
-            _ActionTile(Icons.chat, 'WhatsApp', onWhatsApp),
+            _ActionTile(Icons.chat, l10n.whatsApp, onWhatsApp),
             _ActionTile(Icons.local_taxi, l10n.transport, onTransport),
           ],
         );

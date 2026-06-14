@@ -12,6 +12,7 @@ import 'package:repair_ai/features/auth/presentation/screens/change_password_scr
 import 'package:repair_ai/features/auth/presentation/screens/chp_sign_in_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/create_account_screen.dart';
 import 'package:repair_ai/features/auth/presentation/screens/recover_account_screen.dart';
+import 'package:repair_ai/features/auth/presentation/screens/otp_screen.dart';
 import 'package:repair_ai/features/care/presentation/screens/care_screen.dart';
 import 'package:repair_ai/features/medication_tracking/presentation/screens/medication_tracking_screen.dart';
 import 'package:repair_ai/features/profile/presentation/screens/complete_care_profile_screen.dart';
@@ -23,10 +24,15 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/triage/presentation/screens/symptom_report_screen.dart';
 import '../../features/triage/presentation/screens/ai_analyzing_screen.dart';
 import '../../features/triage/presentation/screens/risk_result_screen.dart';
+import '../../features/triage/presentation/screens/symptom_check_screen.dart';
 import '../../features/referral/presentation/screens/referral_screen.dart';
+import '../../features/care/presentation/screens/case_chat_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/my_reports_screen.dart';
 import '../../features/profile/presentation/screens/language_screen.dart';
+import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/notifications_screen.dart';
+import '../../features/profile/presentation/screens/payments_screen.dart';
 import '../../features/mental_health/presentation/screens/mental_health.dart';
 import '../../features/dashboard/presentation/screens/provider_dashboard.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -44,6 +50,7 @@ bool isPublicRoute(String path) {
       path == '/auth/chp' ||
       path == '/auth/create-account' ||
       path == '/auth/recover' ||
+      path == '/auth/otp' ||
       path == '/login/transition';
 }
 
@@ -54,6 +61,7 @@ bool isProviderRoute(String path) {
 
 bool isPatientRoute(String path) {
   return path == '/' ||
+      path == '/symptom-check' ||
       path == '/triage/symptom-report' ||
       path == '/triage/analyzing' ||
       path == '/triage/risk-result' ||
@@ -63,12 +71,16 @@ bool isPatientRoute(String path) {
       path == '/profile' ||
       path == '/profile/complete-care' ||
       path == '/profile/language' ||
+      path == '/profile/settings' ||
+      path == '/profile/notifications' ||
+      path == '/profile/change-password' ||
+      path == '/profile/payments' ||
       path == '/history' ||
       path == '/mental-health';
 }
 
 bool isSharedProtectedRoute(String path) {
-  return path == '/medication-tracking';
+  return path == '/medication-tracking' || path == '/care/chat/:visitId';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -98,6 +110,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (!isLoggedIn && !isPublicRoute(path)) {
+        return '/auth';
+      }
+
+      // Shared protected routes require login but allow both roles.
+      if (!isLoggedIn && isSharedProtectedRoute(path)) {
         return '/auth';
       }
 
@@ -154,6 +171,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RecoverAccountScreen(),
       ),
       GoRoute(
+        path: '/auth/otp',
+        builder: (context, state) => const OtpScreen(),
+      ),
+      GoRoute(
         path: '/login/transition',
         builder: (context, state) => const LoginTransitionScreen(),
       ),
@@ -166,6 +187,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return FadeTransition(opacity: animation, child: child);
           },
         ),
+      ),
+      GoRoute(
+        path: '/symptom-check',
+        builder: (context, state) => const SymptomCheckScreen(),
       ),
       GoRoute(
         path: '/triage/symptom-report',
@@ -192,6 +217,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/care/chat/:visitId',
+        builder: (context, state) {
+          final visitId =
+              int.tryParse(state.pathParameters['visitId'] ?? '') ?? 0;
+          if (visitId == 0) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Chat')),
+              body: const Center(child: Text('Invalid visit ID.')),
+            );
+          }
+          final title = state.uri.queryParameters['title'] ?? 'Chat';
+          return CaseChatScreen(visitId: visitId, visitTitle: title);
+        },
+      ),
+      GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
       ),
@@ -206,6 +246,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/language',
         builder: (context, state) => const LanguageScreen(),
+      ),
+      GoRoute(
+        path: '/profile/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/profile/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/profile/payments',
+        builder: (context, state) => const PaymentsScreen(),
       ),
       GoRoute(
         path: '/history',
@@ -227,8 +279,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             mode: canUseProviderMode
                 ? MedicationTrackingMode.providerManage
                 : MedicationTrackingMode.patientReadOnly,
-            patientId:
-                query['patientId'] ??
+            patientId: query['patientId'] ??
                 currentPatient?.storageKey ??
                 'current-patient',
             patientName: query['patientName'],

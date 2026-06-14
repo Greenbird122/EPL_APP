@@ -48,7 +48,7 @@ class CareFeedState {
       prescriptions.isNotEmpty;
 }
 
-final careFeedProvider = FutureProvider<CareFeedState>((ref) async {
+final careFeedProvider = FutureProvider.autoDispose<CareFeedState>((ref) async {
   final localReports = ref.watch(reportHistoryProvider);
   final patientApi = ref.watch(patientApiProvider);
   final visitApi = ref.watch(visitApiProvider);
@@ -85,36 +85,47 @@ final careFeedProvider = FutureProvider<CareFeedState>((ref) async {
     );
   }
 
+  // Accumulate results so a late 401 doesn't discard already-fetched data.
+  List<Map<String, dynamic>> backendReports = const [];
+  List<Map<String, dynamic>> triageResults = const [];
+  List<Map<String, dynamic>> referrals = const [];
+  List<Map<String, dynamic>> followUps = const [];
+  List<Map<String, dynamic>> alerts = const [];
+  List<Map<String, dynamic>> prescriptions = const [];
+  List<String> notices = const [];
+  Map<String, dynamic>? profile;
+
   try {
-    final profile = await patientApi.myProfile();
+    profile = await patientApi.myProfile();
     final patientId = profile['id'] as int?;
-    final notices = <String>[];
-    final backendReports = await _safeFetchList(
+    notices = <String>[];
+
+    backendReports = await _safeFetchList(
       () => visitApi.visits(patientId: patientId),
       notices,
       label: 'Reports',
     );
-    final triageResults = await _safeFetchList(
+    triageResults = await _safeFetchList(
       () => triageApi.results(patientId: patientId),
       notices,
       label: 'AI assessments',
     );
-    final referrals = await _safeFetchList(
+    referrals = await _safeFetchList(
       () => referralApi.referrals(patientId: patientId),
       notices,
       label: 'Referrals',
     );
-    final followUps = await _safeFetchList(
+    followUps = await _safeFetchList(
       () => followUpApi.schedules(patientId: patientId),
       notices,
       label: 'Follow-ups',
     );
-    final alerts = await _safeFetchList(
+    alerts = await _safeFetchList(
       () => followUpApi.alerts(patientId: patientId),
       notices,
       label: 'Alerts',
     );
-    final prescriptions = await _safeFetchList(
+    prescriptions = await _safeFetchList(
       () => clinicalApi.decisions(patientId: patientId),
       notices,
       label: 'Prescriptions',
@@ -137,6 +148,25 @@ final careFeedProvider = FutureProvider<CareFeedState>((ref) async {
   } on ApiException catch (error) {
     if (error.statusCode == 401) {
       await ref.read(authSessionProvider.notifier).signOutBackend();
+      // Don't discard already-fetched data — return what we collected so far.
+      return CareFeedState(
+        connectionState: BackendConnectionState.offline,
+        backendReports: backendReports,
+        localReports: localReports,
+        triageResults: triageResults,
+        referrals: referrals,
+        followUps: followUps,
+        alerts: alerts,
+        prescriptions: prescriptions,
+        profileCompletion: const ProfileCompletionState(
+          isComplete: false,
+          missingFields: ['sign in'],
+        ),
+        notices: [
+          ...notices,
+          'Your session expired. Some data may be unavailable.',
+        ],
+      );
     }
     return CareFeedState(
       connectionState: BackendConnectionState.offline,
@@ -158,20 +188,22 @@ final careFeedProvider = FutureProvider<CareFeedState>((ref) async {
       ],
     );
   } catch (_) {
+    // Non-API errors (network, etc.) — still preserve already-fetched data.
     return CareFeedState(
       connectionState: BackendConnectionState.offline,
-      backendReports: const [],
+      backendReports: backendReports,
       localReports: localReports,
-      triageResults: const [],
-      referrals: const [],
-      followUps: const [],
-      alerts: const [],
-      prescriptions: const [],
+      triageResults: triageResults,
+      referrals: referrals,
+      followUps: followUps,
+      alerts: alerts,
+      prescriptions: prescriptions,
       profileCompletion: const ProfileCompletionState(
         isComplete: false,
         missingFields: ['age', 'sub-county', 'LMP'],
       ),
-      notices: const [
+      notices: [
+        ...notices,
         'We could not connect to the backend. Saved care data is still shown where available.',
       ],
     );
